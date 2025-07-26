@@ -1,12 +1,15 @@
+from importlib.metadata import requires
+
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models.functions import NullIf
-from django.utils.autoreload import raise_last_exception
+from cloudinary.models import CloudinaryField
+from ckeditor.fields import RichTextField
+from smart_selects.db_fields import ChainedForeignKey
 
 
 class BaseModel(models.Model):
-    is_active = models.BooleanField(default=True)
+    active = models.BooleanField(default=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
@@ -23,6 +26,8 @@ class Role(BaseModel):
 
 class User(AbstractUser):
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, related_name="users", related_query_name="user", null=True)
+    avatar = CloudinaryField(null=False)
+    is_provider = models.BooleanField(default=False)
 
     def __str__(self):
         return self.username
@@ -36,10 +41,28 @@ class Category(BaseModel):
         return self.name
 
 
-class Location(BaseModel):
+class Province(BaseModel):
     name = models.CharField(max_length=255, null=False, blank=False)
-    description = models.TextField()
 
+    def __str__(self):
+        return self.name
+
+class District(BaseModel):
+    name = models.CharField(max_length=100)
+    province = models.ForeignKey(Province, on_delete=models.CASCADE, related_name="districts", related_query_name="district")
+
+    class Meta:
+        unique_together = ('name', 'province')
+
+    def __str__(self):
+        return self.name
+
+class Ward(BaseModel):
+    name = models.CharField(max_length=100)
+    district = models.ForeignKey(District, on_delete=models.CASCADE, related_name="wards", related_query_name="ward")
+
+    class Meta:
+        unique_together = ('name', 'district')
 
     def __str__(self):
         return self.name
@@ -47,21 +70,25 @@ class Location(BaseModel):
 
 class Place(BaseModel):
     name = models.CharField(max_length=255, unique=True, blank=False, null=False)
-    description = models.TextField()
+    description = RichTextField()
     address = models.CharField(max_length=255, unique=True, blank=False, null=False)
     open_hours = models.TimeField()
     close_hours = models.TimeField()
     ticket_price = models.DecimalField(max_digits=10, decimal_places=0, default=0)
-    location = models.ForeignKey(Location, on_delete=models.PROTECT, related_name="places", related_query_name="place")
+    province = models.ForeignKey(Province, on_delete=models.CASCADE, related_name="places", related_query_name="place", null=True, blank=True)
+    district = ChainedForeignKey(District, chained_field="province", chained_model_field="province", show_all=False, auto_choose=True, sort=True, on_delete=models.PROTECT, null=True, blank=True)
+    ward = ChainedForeignKey(Ward, chained_field="district", chained_model_field="district", show_all=False, auto_choose=True, sort=True, on_delete=models.PROTECT, null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="places", related_query_name="place")
 
     def __str__(self):
         return self.name
 
 
+
 class Provider(BaseModel):
     name = models.CharField(max_length=255, blank=False, null=False)
-    description = models.TextField()
+    description = RichTextField(default="Chưa có mô tả!", null=False)
+    avatar = CloudinaryField
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
 
     def __str__(self):
@@ -70,7 +97,7 @@ class Provider(BaseModel):
 
 class Tour(BaseModel):
     title = models.TextField()
-    description = models.TextField()
+    description = RichTextField()
     price = models.DecimalField(max_digits=10, decimal_places=0, default=0)
     start_date = models.DateField()
     end_date = models.DateField()
@@ -116,7 +143,7 @@ class TourPlace(BaseModel):
 
 class Image(BaseModel):
     title = models.CharField(max_length=255)
-    url_path = models.CharField(max_length=255)
+    url_path = CloudinaryField()
     Place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name="images")
 
     def __str__(self):
@@ -152,6 +179,9 @@ class Payment(BaseModel):
         CANCELLED = "Cancelled", "Đã hủy"
 
     status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
+
+    booking = models.OneToOneField(Booking, on_delete=models.PROTECT, null=True)
+
 
 
 class Favourite(BaseModel):

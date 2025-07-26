@@ -12,11 +12,15 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+import corsheaders.middleware
+import oauth2_provider.oauth2_backends
 from django.conf.global_settings import AUTH_USER_MODEL
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+MEDIA_ROOT = '%s/travels/static/' % BASE_DIR
 
+CKEDITOR_UPLOAD_PATH = "ckeditor/travels/"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -40,9 +44,17 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'travels.apps.TravelsConfig',
+    'ckeditor',
+    'ckeditor_uploader',
+    'smart_selects',
+    'rest_framework',
+    'oauth2_provider',
+    'drf_yasg',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -52,7 +64,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 ROOT_URLCONF = 'travelapp.urls'
+
+USE_DJANGO_JQUERY = True
 
 TEMPLATES = [
     {
@@ -131,3 +147,27 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+import cloudinary
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
+
+# Configuration
+cloudinary.config(
+    cloud_name = "disqxvj3s",
+    api_key = "591477333856363",
+    api_secret = "R_tdHJCqiow28KiCrgzMQsRVe8c", # Click 'View API Keys' above to copy your API secret
+    secure=True
+)
+
+REST_FRAMEWORK = {
+    'DEFAULT_PARSER_CLASSES': ['rest_framework.parsers.JSONParser'],
+    'DEFAULT_AUTHENTICATION_CLASSES': ('oauth2_provider.contrib.rest_framework.OAuth2Authentication',)
+}
+
+
+OAUTH2_PROVIDER = {'OAUTH2_BACKEND_CLASS':'oauth2_provider.oauth2_backends.JSONOAuthLibCore'}
+
+CLIENT_ID = "dRdoF7s41YtedJX6KyNtcfC3s9gCpKjCLpFTw6z5"
+CLIENT_SECRET = "esrdDnzOwUeX3Cqc3HX9bfj9xzinOnyCmRR4HD47EkYek1RCvSjdyhOm0KbcUoju5MAOUQpPAPvWj26494ygBHxaAeSKDogo24K7fitmgrIJAdcu7tujREzthS7F5KuY"
