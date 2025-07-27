@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Place, Province, User, Role, District, Ward, Provider, TourPlace, Tour, Image, Booking, \
+from .models import Category, Place, Province, User, Role, Ward, Provider, TourPlace, Tour, Image, Booking, \
     Payment,Favourite, Itinerary, ItineraryItem, Comment, Rating,Conversation, Message
 
 from django import forms
@@ -35,7 +35,6 @@ admin_site.register(Provider)
 admin_site.register(Category)
 admin_site.register(Place, MyPlaceAdmin)
 admin_site.register(Province)
-admin_site.register(District)
 admin_site.register(Role)
 admin_site.register(Ward)
 admin_site.register(Tour)

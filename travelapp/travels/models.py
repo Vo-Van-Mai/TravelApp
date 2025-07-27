@@ -28,6 +28,7 @@ class User(AbstractUser):
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, related_name="users", related_query_name="user", null=True)
     avatar = CloudinaryField(null=False)
     is_provider = models.BooleanField(default=False)
+    phone = models.CharField(null=True, max_length=11, blank=True, unique=True)
 
     def __str__(self):
         return self.username
@@ -47,22 +48,14 @@ class Province(BaseModel):
     def __str__(self):
         return self.name
 
-class District(BaseModel):
-    name = models.CharField(max_length=100)
-    province = models.ForeignKey(Province, on_delete=models.CASCADE, related_name="districts", related_query_name="district")
 
-    class Meta:
-        unique_together = ('name', 'province')
-
-    def __str__(self):
-        return self.name
 
 class Ward(BaseModel):
     name = models.CharField(max_length=100)
-    district = models.ForeignKey(District, on_delete=models.CASCADE, related_name="wards", related_query_name="ward")
+    province = models.ForeignKey(Province, on_delete=models.CASCADE, related_name="wards", related_query_name="ward")
 
     class Meta:
-        unique_together = ('name', 'district')
+        unique_together = ('name', 'province')
 
     def __str__(self):
         return self.name
@@ -72,12 +65,11 @@ class Place(BaseModel):
     name = models.CharField(max_length=255, unique=True, blank=False, null=False)
     description = RichTextField()
     address = models.CharField(max_length=255, unique=True, blank=False, null=False)
-    open_hours = models.TimeField()
-    close_hours = models.TimeField()
+    open_hours = models.TimeField(null=True)
+    close_hours = models.TimeField(null=True)
     ticket_price = models.DecimalField(max_digits=10, decimal_places=0, default=0)
-    province = models.ForeignKey(Province, on_delete=models.CASCADE, related_name="places", related_query_name="place", null=True, blank=True)
-    district = ChainedForeignKey(District, chained_field="province", chained_model_field="province", show_all=False, auto_choose=True, sort=True, on_delete=models.PROTECT, null=True, blank=True)
-    ward = ChainedForeignKey(Ward, chained_field="district", chained_model_field="district", show_all=False, auto_choose=True, sort=True, on_delete=models.PROTECT, null=True, blank=True)
+    province = models.ForeignKey(Province, on_delete=models.PROTECT, related_name="places", related_query_name="place", null=False, blank=False)
+    ward = ChainedForeignKey(Ward, chained_field="province", chained_model_field="province", show_all=False, auto_choose=True, sort=True, on_delete=models.PROTECT, null=False, blank=False)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="places", related_query_name="place")
 
     def __str__(self):
@@ -88,8 +80,13 @@ class Place(BaseModel):
 class Provider(BaseModel):
     name = models.CharField(max_length=255, blank=False, null=False)
     description = RichTextField(default="Chưa có mô tả!", null=False)
-    avatar = CloudinaryField
+    avatar = CloudinaryField()
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    address = models.CharField(max_length=100, null=False)
+    province = models.ForeignKey(Province, on_delete=models.PROTECT, related_name="providers", related_query_name="provider",
+                                 null=False, blank=False)
+    ward = ChainedForeignKey(Ward, chained_field="province", chained_model_field="province", show_all=False,
+                             auto_choose=True, sort=True, on_delete=models.PROTECT, null=False, blank=False)
 
     def __str__(self):
         return self.name
@@ -144,7 +141,7 @@ class TourPlace(BaseModel):
 class Image(BaseModel):
     title = models.CharField(max_length=255)
     url_path = CloudinaryField()
-    Place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name="images")
+    place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name="images")
 
     def __str__(self):
         return self.title

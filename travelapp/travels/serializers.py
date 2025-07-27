@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
-from travels.models import Category, Place, Image, User, Role
+from travels.models import Category, Place, Image, User, Role, Provider, Comment
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -27,13 +27,49 @@ class PlaceSerializer(ModelSerializer):
     def get_full_address(self, place):
         address = place.address or ""
         ward = place.ward.name if place.ward else ""
-        district = place.district.name if place.district else ""
         province = place.province.name if place.province else ""
-        return f"{address} {ward} {district} {province}".strip()
+        return f"{address} {ward} {province}".strip()
+
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        place = Place.objects.create(**validated_data)
+
+        if request and hasattr(request, 'FILES'):
+            for i, file in enumerate(request.FILES.getlist('images')):
+                Image.objects.create(
+                    place=place,
+                    title=f'Ảnh {i + 1}',
+                    url_path=file
+                )
+
+        return place
+
+    def update(self, instance, validated_data):
+        request = self.context.get('request')
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if request and hasattr(request, 'FILES'):
+            for i, file in enumerate(request.FILES.getlist('images')):
+                Image.objects.create(
+                    place=instance,
+                    title=f'Ảnh {i + 1}',
+                    url_path=file
+                )
+
+        return instance
 
     class Meta:
         model = Place
-        fields = ['id', 'name', 'created_date', 'updated_date',"images", "full_address"]
+        fields = [
+            'id', 'name', 'description', 'address',
+            'open_hours', 'close_hours', 'ticket_price',
+            'province', 'ward', 'category',
+            'images', 'full_address', 'created_date', 'updated_date'
+        ]
 
 
 class RoleSerializer(ModelSerializer):
@@ -47,12 +83,9 @@ class UserSerializer(ModelSerializer):
     def create(self, validated_data):
         data = validated_data.copy()
 
-        role_name = self.context.get("role_name", "traveler")
-        try:
-            role = Role.objects.get(name__iexact=role_name)
-        except Role.DoesNotExist:
-            raise serializers.ValidationError({"role": "Vai trò không tồn tại!"})
-
+        role = self.context.get("role")
+        if role is None:
+            raise serializers.ValidationError({"role": "Vai trò chưa được cung cấp."})
         user = User(**data)
         user.set_password(data['password'])
         user.role = role
@@ -67,10 +100,66 @@ class UserSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "email", "password", 'avatar']
+        fields = ["id", "username", "first_name", "last_name", "email", "password", 'avatar', 'phone']
         extra_kwargs = {
             "password": {'write_only' : True},
             "avatar": {"error_messages":{
                 "required": "Vui lòng chọn ảnh đại diện!"
             }}
+        }
+
+
+class ProviderSerializer(ModelSerializer):
+    user = UserSerializer(many=False, read_only=True)
+    full_address = serializers.SerializerMethodField()
+
+    def get_full_address(self, provider):
+        address = provider.address or ""
+        ward = provider.ward.name if provider.ward else ""
+        province = provider.province.name if provider.province else ""
+        return f"{address} {ward} {province}".strip()
+
+    class Meta:
+        model = Provider
+        fields = ['name', 'description', 'avatar', 'user', 'province', 'ward', "full_address" ]
+        extra_kwargs = {
+            "province" :{
+                "error_messages": {
+                    "required": "Vui lòng chọn địa chỉ tỉnh/thành phổ!",
+                    "blank": "Không được để trống thành phố!"
+                }
+            },
+            "ward": {
+                "error_messages": {
+                    "required": "Vui lòng chọn địa chỉ phường/xã!",
+                    "blank": "Không được để trống phường/xã!"
+                }
+            }
+        }
+
+
+
+class CommentSerializer(ModelSerializer):
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['user'] = {
+            "id": instance.user.id,
+            'username': instance.user.username if instance.user else "",
+            "avatar": instance.user.avatar.url if instance.user else ""
+        }
+        return rep
+
+    class Meta:
+        model = Comment
+        fields = '__all__'
+        extra_kwargs = {
+            'content':{
+                "error_messages":{
+                    "required": "Vui lòng nhập nội dung binh luận!"
+                }
+            },
+            'place': {
+                "write_only": True
+            }
         }
