@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
-from travels.models import Category, Place, Image, User, Role, Provider, Comment
+from travels.models import Category, Place, Image, User, Role, Provider, Comment, Rating, Favourite
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -21,15 +21,6 @@ class ImageSerializer(ModelSerializer):
 
 
 class PlaceSerializer(ModelSerializer):
-    images = ImageSerializer(many=True, read_only=True)
-    full_address = serializers.SerializerMethodField()
-
-    def get_full_address(self, place):
-        address = place.address or ""
-        ward = place.ward.name if place.ward else ""
-        province = place.province.name if place.province else ""
-        return f"{address} {ward} {province}".strip()
-
 
     def create(self, validated_data):
         request = self.context.get('request')
@@ -65,10 +56,26 @@ class PlaceSerializer(ModelSerializer):
     class Meta:
         model = Place
         fields = [
-            'id', 'name', 'description', 'address',
+            'id', 'name', 'address',
             'open_hours', 'close_hours', 'ticket_price',
-            'province', 'ward', 'category',
-            'images', 'full_address', 'created_date', 'updated_date'
+            'province', 'ward', 'category','created_date', 'updated_date'
+        ]
+
+
+class PlaceDetailSerializer(PlaceSerializer):
+    images = ImageSerializer(many=True, read_only=True)
+    full_address = serializers.SerializerMethodField()
+
+    def get_full_address(self, place):
+        address = place.address or ""
+        ward = place.ward.name if place.ward else ""
+        province = place.province.name if place.province else ""
+        return f"{address} {ward} {province}".strip()
+
+    class Meta:
+        model = PlaceSerializer.Meta.model
+        fields = PlaceSerializer.Meta.fields +  [
+            'description', 'images', 'full_address'
         ]
 
 
@@ -163,3 +170,43 @@ class CommentSerializer(ModelSerializer):
                 "write_only": True
             }
         }
+
+
+class RatingSerializer(ModelSerializer):
+
+    def to_representation(self, rating):
+        rep = super().to_representation(rating)
+        rep['user'] = {
+            'id': rating.user.id,
+            'username': rating.user.username,
+            'avatar': rating.user.avatar.url if rating.user.avatar else ""
+        }
+        rep['place'] ={
+            'id': rating.place.id,
+            'name': rating.place.name
+        }
+        return rep
+
+    class Meta:
+        model = Rating
+        fields = ['id', 'star', 'user', 'place']
+
+
+class FavouriteSerializer(ModelSerializer):
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['user'] = {
+            'id': instance.user.id,
+            'username': instance.user.username,
+            'avatar': instance.user.avatar.url if instance.user.avatar else ""
+        }
+        rep['place'] ={
+            'id': instance.place.id,
+            'name': instance.place.name
+        }
+        return rep
+
+    class Meta:
+        model = Favourite
+        fields = ['id', 'is_like', 'user', 'place']

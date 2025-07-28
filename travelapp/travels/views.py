@@ -1,14 +1,14 @@
-from xmlrpc.client import Fault
-
+from idna import ulabel
 from rest_framework.exceptions import NotFound
-from rest_framework.parsers import MultiPartParser
+from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.response import Response
 
 from travels import serializers, perms
-from travels.panigation import PlacePagination, CommentPagination
+from travels.panigation import PlacePagination, CommentPagination, RatingPagination
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action, permission_classes
-from travels.models import Category, Place, Image, Role, User, Provider, Comment
+from travels.models import Category, Place, Image, Role, User, Provider, Comment, Rating, Favourite
+
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
     queryset = Category.objects.filter(active=True)
@@ -23,14 +23,14 @@ class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPI
 
 class PlaceViewSet(viewsets.ModelViewSet):
     queryset = Place.objects.filter(active=True)
-    serializer_class = serializers.PlaceSerializer
-    parser_classes = [MultiPartParser]
+    serializer_class = serializers.PlaceDetailSerializer
+    parser_classes = [MultiPartParser, JSONParser]
     pagination_class = PlacePagination
 
     def get_permissions(self):
-        if self.action == "get_comment" and self.request.method == 'POST':
+        if self.action in ['get_comment', 'get_rating', 'get_favourite'] and self.request.method == 'POST':
             return [permissions.IsAuthenticated()]
-        if self.action in ["list", "retrieve"] or (self.action == "get_comment" and self.request.method=="GET"):
+        if self.action in ["list", "retrieve"] or (self.action in ['get_comment', 'get_rating', 'get_favourite'] and self.request.method=="GET"):
             return [permissions.AllowAny()]
         else:
             return [permissions.IsAuthenticated(), perms.IsAdmin()]
@@ -69,10 +69,65 @@ class PlaceViewSet(viewsets.ModelViewSet):
             p = CommentPagination()
             page = p.paginate_queryset(comment, self.request)
             if page:
-                s = serializers.CommentSerializer(comment, many=True)
+                s = serializers.CommentSerializer(page, many=True)
                 return p.get_paginated_response(s.data)
             else:
                 return Response(serializers.CommentSerializer(comment, many=True).data, status=status.HTTP_200_OK)
+
+    @action(methods=['get', 'post'], url_path="get-rating", detail=True)
+    def get_rating(self, request, pk):
+        if request.method.__eq__("POST"):
+            star = request.data.get("star")
+
+            # Kiểm tra hợp lệ số sao
+            if not star or not str(star).isdigit() or int(star) not in range(1, 6):
+                return Response({"message": "Số sao phải từ 1 đến 5"}, status=status.HTTP_400_BAD_REQUEST)
+
+            place = self.get_object()
+
+            # Tạo đánh giá nếu chưa có
+            rating, created = Rating.objects.get_or_create(
+                user=request.user,
+                place=place,
+                defaults={"star": int(star)}
+            )
+
+            if not created:
+                return Response({"message": "Bạn đã đánh giá địa điểm này!"}, status=status.HTTP_200_OK)
+
+            return Response(serializers.RatingSerializer(rating).data, status=status.HTTP_201_CREATED)
+        else:
+            rating = self.get_object().ratings.select_related('user').filter(active=True)
+            p = RatingPagination()
+            page = p.paginate_queryset(rating, self.request)
+            if page:
+                s = serializers.RatingSerializer(page, many=True)
+                return p.get_paginated_response(s.data)
+            else:
+                return Response(serializers.RatingSerializer(rating, many=True).data, status=status.HTTP_200_OK)
+
+    @action(methods=['get', 'post'], detail=True, url_path='get-favourite')
+    def get_favourite(self, request, pk):
+        if request.method.__eq__("POST"):
+            like, created = Favourite.objects.get_or_create(user=request.user, place=self.get_object())
+
+            if not created:
+                like.is_like = not like.is_like
+                like.save()
+
+            return Response(serializers.FavouriteSerializer(like).data, status=status.HTTP_201_CREATED)
+        else:
+            like = self.get_object().favourites.select_related('user').filter(active=True, is_like=True)
+
+            p = RatingPagination()
+            page = p.paginate_queryset(like, self.request)
+            if page:
+                s = serializers.FavouriteSerializer(page, many=True)
+                return p.get_paginated_response(s.data)
+            else:
+                return Response(serializers.FavouriteSerializer(like, many=True).data, status=status.HTTP_200_OK)
+
+
 
 
 class RoleViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
@@ -166,8 +221,9 @@ class ProviderViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Ret
         return [perms.IsAdmin(), perms.IsProvider()]
 
     def get_queryset(self):
-        query = self.queryset
-        return query.filter(user=self.request.user)
+        if not self.request.user.is_authenticated:
+            return Provider.objects.none()
+        return self.queryset.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         if hasattr(request.user, 'provider'):
@@ -196,9 +252,16 @@ class ProviderViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Ret
         return Response(serializers.ProviderSerializer(provider).data, status=status.HTTP_200_OK)
 
 
-# class CommentViewSet(viewsets.ViewSet, generics.ListAPIView):
-#     queryset = Comment.objects.filter(active=True)
-#     serializer_class = serializers.CommentSerializer
+class CommentViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView):
+    queryset = Comment.objects.filter(active=True)
+    serializer_class = serializers.CommentSerializer
+    permission_classes = [perms.IsOwnerComment]
+
+
+class RatingViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView):
+    queryset = Rating.objects.filter(active=True)
+    serializer_class = serializers.RatingSerializer
+    permission_classes = [perms.IsOwnerRating]
 
 
 

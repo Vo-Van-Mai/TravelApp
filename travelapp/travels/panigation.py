@@ -6,3 +6,6 @@ class PlacePagination(PageNumberPagination):
 
 class CommentPagination(PageNumberPagination):
     page_size = 5
+
+class RatingPagination(PageNumberPagination):
+    page_size = 10
