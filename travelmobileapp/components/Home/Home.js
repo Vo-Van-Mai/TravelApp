@@ -12,7 +12,7 @@ const Home = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
     const [cateId, setCateId] = useState(null);
-    const [q, setQ] = useState("");
+    const [q, setQ] = useState();
     const [hasMore, setHasMore] = useState(true);
     // console.log("Navigation: ", navigation);
 
@@ -23,7 +23,7 @@ const Home = ({ navigation }) => {
     }
 
     const loadPlaces = async () => {
-        if (page < 0) return;
+        if (page <= 0) return;
         try {
             setLoading(true);
             let url = endpoints['places'] + `?page=${page}`;
@@ -74,18 +74,13 @@ const Home = ({ navigation }) => {
         loadCate();
     }, []);
 
-    useEffect(() => {
-        setPlace([]);
-        // setHasMore(true);
-        setPage(1);
-    }, [cateId]);
 
     useEffect(() => {
         let timer = setTimeout(() => {
             setPage(1);
         }, 500);
         return () => clearTimeout(timer);
-    }, [q]);
+    }, [q, cateId]);
 
 
     useEffect(() => {
@@ -96,16 +91,7 @@ const Home = ({ navigation }) => {
     return (
         <SafeAreaView style={MyStyle.container}>
             <View>
-                <View style={[MyStyle.mainHeaderHome]}>
-                    <ImageBackground
-                        source={require('../../assets/headerCover.png')}
-                        style={{ width: '100%', height: 200 }}
-                        resizeMode="stretch"
-                        imageStyle={{ borderTopRightRadius: 50, borderTopLeftRadius: 50, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}
-                    >
-                        <Text style={MyStyle.mainTitle}>Welcome to the Travel app</Text>
-                    </ImageBackground>
-                </View>
+
                 <Searchbar
                     placeholder="Nhập tên địa điểm..."
                     value={q}
@@ -138,6 +124,7 @@ const Home = ({ navigation }) => {
                 // onEndReachedThreshold={0.9}
                 showsVerticalScrollIndicator={false}
                 ListFooterComponent={
+                    
                     loading && <ActivityIndicator size="30" />
                 }
                 horizontal={false}
@@ -147,7 +134,16 @@ const Home = ({ navigation }) => {
                     <>
                         {/* Khu vực header */}
                         <View >
-
+                            <View style={[MyStyle.mainHeaderHome]}>
+                                <ImageBackground
+                                    source={require('../../assets/headerCover.png')}
+                                    style={{ width: '100%', height: 200 }}
+                                    resizeMode="stretch"
+                                    imageStyle={{ borderTopRightRadius: 50, borderTopLeftRadius: 50, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}
+                                >
+                                    <Text style={MyStyle.mainTitle}>Welcome to the Travel app</Text>
+                                </ImageBackground>
+                            </View>
 
 
 

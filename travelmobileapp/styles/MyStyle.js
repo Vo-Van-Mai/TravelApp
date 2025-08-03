@@ -42,6 +42,17 @@ export default StyleSheet.create(
     border:{
         borderColor: "red",
         borderWidth: 1,
+    },
+    m:{
+        margin: 10
+    },
+    p:{
+        padding: 10
+    },
+    msg_error:{
+        color: "red",
+        fontSize: 16,
+        fontWeight: "bold"
     }
 }
 )

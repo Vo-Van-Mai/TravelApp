@@ -137,7 +137,11 @@ class PlaceViewSet(viewsets.ModelViewSet):
 class RoleViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
     queryset = Role.objects.filter(active=True)
     serializer_class = serializers.RoleSerializer
-    permission_classes = [permissions.IsAuthenticated, perms.IsAdmin]
+
+    def get_permissions(self):
+        if self.request.method.__eq__("GET"):
+            return [permissions.AllowAny()]
+        return [perms.IsAdmin()]
 
 
 class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -164,7 +168,7 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
 
     @action(methods=['post'], url_path="register", detail=False)
     def register(self, request):
-        role_id = request.query_params.get("role_id")
+        role_id = request.data.get("role_id")
         try:
             role = Role.objects.get(pk=role_id)
         except Role.DoesNotExist:
