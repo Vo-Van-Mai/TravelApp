@@ -66,6 +66,25 @@ class PlaceDetailSerializer(PlaceSerializer):
     images = ImageSerializer(many=True, read_only=True)
     full_address = serializers.SerializerMethodField()
 
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['province'] = {
+            'id': instance.province.id,
+            'name': instance.province.name
+        }
+
+        rep['ward'] = {
+            'id': instance.ward_id,
+            'name': instance.ward.name
+        }
+
+        rep['category'] = {
+            "id": instance.category_id,
+            "name": instance.category.name
+        }
+
+        return rep
+
     def get_full_address(self, place):
         address = place.address or ""
         ward = place.ward.name if place.ward else ""
@@ -143,7 +162,6 @@ class ProviderSerializer(ModelSerializer):
                 }
             }
         }
-
 
 
 class CommentSerializer(ModelSerializer):

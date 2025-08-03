@@ -1,7 +1,7 @@
 from rest_framework.pagination import PageNumberPagination
 
 class PlacePagination(PageNumberPagination):
-    page_size = 2
+    page_size = 5
 
 
 class CommentPagination(PageNumberPagination):

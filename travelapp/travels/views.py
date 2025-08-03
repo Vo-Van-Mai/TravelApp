@@ -3,11 +3,11 @@ from rest_framework.exceptions import NotFound
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.response import Response
 
-from travels import serializers, perms
-from travels.panigation import PlacePagination, CommentPagination, RatingPagination
+from . import serializers, perms
+from .panigation import PlacePagination, CommentPagination, RatingPagination
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action, permission_classes
-from travels.models import Category, Place, Image, Role, User, Provider, Comment, Rating, Favourite
+from .models import Category, Place, Image, Role, User, Provider, Comment, Rating, Favourite
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
@@ -42,6 +42,7 @@ class PlaceViewSet(viewsets.ModelViewSet):
         province = self.request.query_params.get('province')
         ward = self.request.query_params.get('ward')
         name = self.request.query_params.get("name")
+        cate = self.request.query_params.get("cate")
         if province:
             query = query.filter(province=province)
 
@@ -50,6 +51,9 @@ class PlaceViewSet(viewsets.ModelViewSet):
 
         if name:
             query = query.filter(name__icontains=name)
+
+        if cate:
+            query = query.filter(category_id=cate)
         return query
 
 
@@ -167,7 +171,7 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
             return Response({"message": "Không tìm thấy vai trò hợp lệ!"}, status=400)
 
         if role.name.lower().__eq__('admin'):
-            return Response({"message": "đăng kí vai trò không hợp lệ!"}, status=400)
+            return Response({"message": "Đăng kí vai trò không hợp lệ!"}, status=400)
 
         serializer = serializers.UserSerializer(data=request.data, context={"role": role})
         serializer.is_valid(raise_exception=True)
