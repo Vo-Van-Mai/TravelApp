@@ -30,7 +30,7 @@ class PlaceViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['get_comment', 'get_rating', 'get_favourite'] and self.request.method == 'POST':
             return [permissions.IsAuthenticated()]
-        if self.action in ["list", "retrieve"] or (self.action in ['get_comment', 'get_rating', 'get_favourite'] and self.request.method=="GET"):
+        if self.action in ["list", "retrieve", "get_star_average"] or (self.action in ['get_comment', 'get_rating', 'get_favourite'] and self.request.method=="GET"):
             return [permissions.AllowAny()]
         else:
             return [permissions.IsAuthenticated(), perms.IsAdmin()]
@@ -69,7 +69,7 @@ class PlaceViewSet(viewsets.ModelViewSet):
             c.save()
             return Response(c.data, status=status.HTTP_201_CREATED)
         else:
-            comment = self.get_object().comments.select_related('user').filter(active=True)
+            comment = self.get_object().comments.select_related('user').filter(active=True).order_by('-id')
             p = CommentPagination()
             page = p.paginate_queryset(comment, self.request)
             if page:
@@ -109,6 +109,21 @@ class PlaceViewSet(viewsets.ModelViewSet):
                 return p.get_paginated_response(s.data)
             else:
                 return Response(serializers.RatingSerializer(rating, many=True).data, status=status.HTTP_200_OK)
+
+
+    @action(methods=['get'], detail=True, url_path='get-average-rating')
+    def get_star_average(self, request, pk):
+        total_rating = self.get_object().ratings.filter(active=True)
+        total_star = 0
+        for rating in total_rating:
+            total_star += rating.star
+        count_rating = total_rating.count()
+        if count_rating == 0:
+            return Response({"star_average": 0.0, "total_rating": count_rating}, status=status.HTTP_200_OK)
+        star_average = round(total_star / count_rating, 1)
+        return Response({"star_average": star_average, "total_rating": count_rating}, status=status.HTTP_200_OK)
+
+
 
     @action(methods=['get', 'post'], detail=True, url_path='get-favourite')
     def get_favourite(self, request, pk):

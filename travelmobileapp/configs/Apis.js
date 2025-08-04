@@ -13,6 +13,12 @@ export const endpoints = {
     // place endpoint
     'places': '/places/',
     'placeDetail': (id) => `/places/${id}/`,
+    
+    // comment and rating endpoints
+    'comments': (placeId) => `/places/${placeId}/get-comment/`,
+    'ratings': (placeId) => `/places/${placeId}/get-rating/`,
+    'averageRating': (placeId) => `/places/${placeId}/get-average-rating/`,
+    'userRating': (placeId) => `/places/${placeId}/user-rating/`,
 };
 
 export const authAPI = (accessToken) => {
