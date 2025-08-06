@@ -7,7 +7,8 @@ from . import serializers, perms
 from .panigation import PlacePagination, CommentPagination, RatingPagination
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action, permission_classes
-from .models import Category, Place, Image, Role, User, Provider, Comment, Rating, Favourite
+from .models import Category, Place, Image, Role, User, Provider, Comment, Rating, Favourite, Province,Payment, TourPlace, Ward
+from .serializers import ProvinceSerializer
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
@@ -286,5 +287,24 @@ class RatingViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAP
     serializer_class = serializers.RatingSerializer
     permission_classes = [perms.IsOwnerRating]
 
+
+class ProvinceViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
+    queryset = Province.objects.filter(active=True)
+    serializer_class = ProvinceSerializer
+
+    def get_permissions(self):
+        if self.request.method.__eq__("GET"):
+            return [permissions.AllowAny()]
+        return [perms.IsAdmin()]
+
+
+class WardViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
+    queryset = Ward.objects.filter(active=True)
+    serializer_class = serializers.WardSerializer
+
+    def get_permissions(self):
+        if self.request.method.__eq__("GET"):
+            return [permissions.AllowAny()]
+        return [perms.IsAdmin()]
 
 

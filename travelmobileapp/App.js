@@ -10,8 +10,10 @@ import { useContext, useReducer } from "react";
 import MyUserReducer from "./reducers/MyUserReducer";
 import Profile from "./components/User/Profile";
 import { MyDispatchContext, MyUserContext } from "./configs/Context";
+import AddPlace from "./components/Place/AddPlace";
 
 const Stack = createNativeStackNavigator();
+const ProfileStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
@@ -21,11 +23,14 @@ const TabNavigator = () => {
       <Tab.Screen name="index" component={StackNavigator} options={{ tabBarIcon: () => <Icon source="home" size={26}></Icon> }} />
 
       {user === null && <>
-      <Tab.Screen name="login" component={Login} options={{ tabBarIcon: () => <Icon source="account" size={26}></Icon> }} />
-      <Tab.Screen name="register" component={Register} options={{ tabBarIcon: () => <Icon source="account-plus" size={26}></Icon> }} />
+        <Tab.Screen name="login" component={Login} options={{ tabBarIcon: () => <Icon source="account" size={26}></Icon> }} />
+        <Tab.Screen name="register" component={Register} options={{ tabBarIcon: () => <Icon source="account-plus" size={26}></Icon> }} />
       </>}
-      
-      {user!=null && <Tab.Screen name="profile" component={Profile} options={{ tabBarIcon: () => <Icon source="account-plus" size={26}></Icon> }} />}
+
+      {user != null && <Tab.Screen name="account" component={ProfileStackNavigator} options={{ tabBarIcon: () => <Icon source="account-plus" size={26}></Icon> }} />}
+
+
+
     </Tab.Navigator>
   );
 }
@@ -36,6 +41,18 @@ const StackNavigator = () => {
       <Stack.Screen name="Home" component={Home}></Stack.Screen>
       <Stack.Screen name="PlaceDetail" component={PlaceDetail} options={{ title: "Chi tiết địa điểm" }}></Stack.Screen>
     </Stack.Navigator>
+  );
+}
+
+const ProfileStackNavigator = () => {
+  const user = useContext(MyUserContext);
+  return(
+    <ProfileStack.Navigator>
+      {user != null && <ProfileStack.Screen name="profile" component={Profile} options={{ tabBarIcon: () => <Icon source="account-plus" size={26}></Icon> }} />}
+      
+      {user != null && user.role === "admin" && <ProfileStack.Screen name="addPlace" component={AddPlace} />}
+    </ProfileStack.Navigator>
+
   );
 }
 

@@ -30,6 +30,7 @@ class User(AbstractUser):
     is_provider = models.BooleanField(default=False)
     phone = models.CharField(null=True, max_length=11, blank=True, unique=True)
 
+
     def __str__(self):
         return self.username
 

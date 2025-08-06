@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
-from travels.models import Category, Place, Image, User, Role, Provider, Comment, Rating, Favourite
+from .models import Category, Place, Image, User, Role, Provider, Comment, Rating, Favourite, Tour, Province, Ward
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -228,3 +228,20 @@ class FavouriteSerializer(ModelSerializer):
     class Meta:
         model = Favourite
         fields = ['id', 'is_like', 'user', 'place']
+
+
+class ProvinceSerializer(ModelSerializer):
+    class Meta:
+        model = Province
+        fields = '__all__'
+
+
+class WardSerializer(ModelSerializer):
+    class Meta:
+        model = Ward
+        fields = '__all__'
+
+
+# class TourSerializer(ModelSerializer):
+#     class Meta:
+#         model = Tour

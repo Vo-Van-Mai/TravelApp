@@ -3,9 +3,11 @@ import { View } from "react-native";
 import Styles from "./Styles";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const ManagementUser = () => {
     const iconSize = 24
+    const nav = useNavigation();
     return(
         <ScrollView>
             <View>
@@ -29,7 +31,7 @@ const ManagementUser = () => {
                     <Text style={[styles.m, styles.p, styles.titleName]}>Danh sách địa điểm</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.container}>
+                <TouchableOpacity style={styles.container} onPress={() => nav.navigate("addPlace")}>
                     <Icon style={[styles.m, styles.p]} size={iconSize} name="calendar-plus-o" />
                     <Text style={[styles.m, styles.p, styles.titleName]}>Thêm địa điểm</Text>
                 </TouchableOpacity>

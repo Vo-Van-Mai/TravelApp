@@ -120,10 +120,10 @@ const Register = () => {
                     if (key !== "confirm") {
                         if (key === "avatar") {
                             form.append('avatar', {
-                    uri: user.avatar?.uri,
-                    name: user.avatar?.fileName || "avatar.jpg",
-                    type: user.avatar?.type?.includes("image") ? "image/jpeg" : user.avatar?.type || "image/jpeg"
-                    });
+                                uri: user.avatar?.uri,
+                                name: user.avatar?.fileName || "avatar.jpg",
+                                type: user.avatar?.type?.includes("image") ? "image/jpeg" : user.avatar?.type || "image/jpeg"
+                            });
                         } else {
                             form.append(key, user[key]);
                         }
@@ -132,11 +132,11 @@ const Register = () => {
 
                 let url = endpoints["register"]
                 console.info("User:", user);
-        console.log("API URL:", url);
+                console.log("API URL:", url);
 
 
                 res = await Apis.post(url, form, {
-                    headers: {'Content-Type': 'multipart/form-data',}
+                    headers: { 'Content-Type': 'multipart/form-data', }
                 });
 
                 if (res.status === 201) {
@@ -157,7 +157,7 @@ const Register = () => {
             } finally {
                 setLoading(false);
             }
-        }   
+        }
     }
 
     return (

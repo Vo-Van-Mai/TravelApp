@@ -19,6 +19,9 @@ export const endpoints = {
     'ratings': (placeId) => `/places/${placeId}/get-rating/`,
     'averageRating': (placeId) => `/places/${placeId}/get-average-rating/`,
     'userRating': (placeId) => `/places/${placeId}/user-rating/`,
+
+    'provinces': '/provinces/',
+    'wards': '/wards/',
 };
 
 export const authAPI = (accessToken) => {
