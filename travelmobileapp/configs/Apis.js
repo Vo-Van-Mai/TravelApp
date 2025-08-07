@@ -9,12 +9,13 @@ export const endpoints = {
     'login': '/o/token/',
     'register': '/users/register/',
     'current-user': 'users/current-user/',
+    'users': '/users/',
 
     // place endpoint
     'places': '/places/',
     'placeDetail': (id) => `/places/${id}/`,
     
-    // comment and rating endpoints
+    // comment and rating 
     'comments': (placeId) => `/places/${placeId}/get-comment/`,
     'ratings': (placeId) => `/places/${placeId}/get-rating/`,
     'averageRating': (placeId) => `/places/${placeId}/get-average-rating/`,

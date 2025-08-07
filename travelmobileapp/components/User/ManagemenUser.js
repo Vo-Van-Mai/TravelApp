@@ -12,7 +12,7 @@ const ManagementUser = () => {
         <ScrollView>
             <View>
                 <Text style={Styles.mainTitle}>Quản lý người dùng</Text>
-                <TouchableOpacity style={styles.container}>
+                <TouchableOpacity onPress={() => nav.navigate("listUser")} style={styles.container}>
                     <Icon style={[styles.m, styles.p]} size={iconSize} name="user"/>
                     <Text style={[styles.m, styles.p, styles.titleName]}>Danh sách người dùng</Text>
                 </TouchableOpacity>

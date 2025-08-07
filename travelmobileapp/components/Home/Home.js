@@ -13,7 +13,7 @@ const Home = ({ navigation }) => {
     const [page, setPage] = useState(1);
     const [cateId, setCateId] = useState(null);
     const [q, setQ] = useState();
-    const [hasMore, setHasMore] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     // console.log("Navigation: ", navigation);
 
     const loadCate = async () => {
@@ -25,6 +25,7 @@ const Home = ({ navigation }) => {
     const loadPlaces = async () => {
         if (page <= 0) return;
         try {
+            setRefreshing(true)
             setLoading(true);
             let url = endpoints['places'] + `?page=${page}`;
             if (q) url += `&name=${q}`;
@@ -47,19 +48,18 @@ const Home = ({ navigation }) => {
 
             // Nếu không còn trang tiếp theo
             if (!resPlaces.data.next) {
-                // setHasMore(false);
                 setPage(0);
             }
 
         } catch (error) {
             // Nếu lỗi 404 thì dừng tải thêm
-            if (error.response && error.response.status === 404) {
-                // setHasMore(false);
+            if (error.response.status === 404) {
                 setPage(0);
             }
             console.error("Lỗi khi load places:", error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
@@ -72,6 +72,7 @@ const Home = ({ navigation }) => {
 
     useEffect(() => {
         loadCate();
+        loadPlaces();
     }, []);
 
 
@@ -121,8 +122,10 @@ const Home = ({ navigation }) => {
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => <PlaceCard width={"45%"} place={item} navigation={navigation} />}
                 onEndReached={loadMorePlaces}
-                // onEndReachedThreshold={0.9}
+                onEndReachedThreshold={0.7}
                 showsVerticalScrollIndicator={false}
+                onRefresh={() => setPage(1)}
+                refreshing={refreshing}
                 ListFooterComponent={
                     
                     loading && <ActivityIndicator size="30" />

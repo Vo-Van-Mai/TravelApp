@@ -11,6 +11,7 @@ import MyUserReducer from "./reducers/MyUserReducer";
 import Profile from "./components/User/Profile";
 import { MyDispatchContext, MyUserContext } from "./configs/Context";
 import AddPlace from "./components/Place/AddPlace";
+import ListUser from "./components/User/ListUser";
 
 const Stack = createNativeStackNavigator();
 const ProfileStack = createNativeStackNavigator();
@@ -50,7 +51,10 @@ const ProfileStackNavigator = () => {
     <ProfileStack.Navigator>
       {user != null && <ProfileStack.Screen name="profile" component={Profile} options={{ tabBarIcon: () => <Icon source="account-plus" size={26}></Icon> }} />}
       
-      {user != null && user.role === "admin" && <ProfileStack.Screen name="addPlace" component={AddPlace} />}
+      {user != null && user.role === "admin" && <>
+      <ProfileStack.Screen name="addPlace" component={AddPlace} />
+      <ProfileStack.Screen name="listUser" component={ListUser} />
+      </>}
     </ProfileStack.Navigator>
 
   );

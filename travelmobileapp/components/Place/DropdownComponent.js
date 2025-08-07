@@ -43,7 +43,7 @@
           labelField="name"
           valueField="id"
           placeholder={!isFocus ? 'Select item' : '...'}
-          searchPlaceholder="Search..."
+          searchPlaceholder="Tìm kiếm..."
           value={value}
           onFocus={() => setIsFocus(true)}
           onBlur={() => setIsFocus(false)}

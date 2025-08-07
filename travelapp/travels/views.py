@@ -4,7 +4,7 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.response import Response
 
 from . import serializers, perms
-from .panigation import PlacePagination, CommentPagination, RatingPagination
+from .panigation import PlacePagination, CommentPagination, RatingPagination, UserPagination
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action, permission_classes
 from .models import Category, Place, Image, Role, User, Provider, Comment, Rating, Favourite, Province,Payment, TourPlace, Ward
@@ -23,7 +23,7 @@ class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPI
 
 
 class PlaceViewSet(viewsets.ModelViewSet):
-    queryset = Place.objects.filter(active=True)
+    queryset = Place.objects.filter(active=True).order_by('-id')
     serializer_class = serializers.PlaceDetailSerializer
     parser_classes = [MultiPartParser, JSONParser]
     pagination_class = PlacePagination
@@ -164,6 +164,7 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
     parser_classes = [MultiPartParser]
+    pagination_class = UserPagination
 
     def get_permissions(self):
         if self.action.__eq__("register"):
