@@ -2,9 +2,11 @@ import { FlatList, ImageBackground, ScrollView, Text, TouchableOpacity, View } f
 import MyStyle from "../../styles/MyStyle";
 import { SafeAreaView } from "react-native";
 import { ActivityIndicator, Chip, Searchbar } from "react-native-paper";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Apis, { endpoints } from "../../configs/Apis";
 import PlaceCard from "../Place/PlaceCard";
+import Style from "./Style";
+import DatetimePiker from "../Header/DatetimePicker";
 
 const Home = ({ navigation }) => {
     const [place, setPlace] = useState([]);
@@ -56,7 +58,7 @@ const Home = ({ navigation }) => {
             if (error.response.status === 404) {
                 setPage(0);
             }
-            console.error("Lỗi khi load places:", error);
+            // console.error("Lỗi khi load places:", error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -69,6 +71,8 @@ const Home = ({ navigation }) => {
             setPage(prev => prev + 1);
         }
     };
+
+
 
     useEffect(() => {
         loadCate();
@@ -89,10 +93,55 @@ const Home = ({ navigation }) => {
             loadPlaces();
     }, [page]);
 
+    if (place.length === 0) {
+        return (
+            <View style={MyStyle.container}>
+                
+                <View>
+                    <Searchbar
+                        placeholder="Nhập tên địa điểm..."
+                        value={q}
+                        onChangeText={setQ}
+                        style={{ margin: 10, backgroundColor: "#ffffff" }}
+                    />
+
+                    {/* Khu vực category */}
+
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: "space-around", marginBottom: 10 }}>
+                        <TouchableOpacity onPress={() => setCateId(null)}>
+                            <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} > Tất cả</Chip>
+                        </TouchableOpacity>
+                        {
+                            categories.map(c => <TouchableOpacity key={c.id} onPress={() => setCateId(c.id)}>
+                                <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} >{c.name}</Chip>
+                            </TouchableOpacity>)
+                        }
+                    </View>
+                </View>
+
+                <View style={[MyStyle.mainHeaderHome]}>
+                                <ImageBackground
+                                    source={require('../../assets/headerCover.png')}
+                                    style={{ width: '100%', height: 200 }}
+                                    resizeMode="stretch"
+                                    imageStyle={{ borderTopRightRadius: 50, borderTopLeftRadius: 50, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}
+                                >
+                                    <Text style={MyStyle.mainTitle}>Welcome to the Travel app</Text>
+                                </ImageBackground>
+                            </View>
+
+                <View style={Style.alertContainer}>
+                    <View style={Style.alertInfo}>
+                        <Text style={Style.alertText}>Không có địa điểm nào phù hợp!</Text>
+                    </View>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <SafeAreaView style={MyStyle.container}>
             <View>
-
                 <Searchbar
                     placeholder="Nhập tên địa điểm..."
                     value={q}
@@ -112,27 +161,24 @@ const Home = ({ navigation }) => {
                         </TouchableOpacity>)
                     }
                 </View>
-
-
-
             </View>
             <FlatList
                 style={{ width: "100%" }}
                 data={place}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => <PlaceCard width={"45%"} place={item} navigation={navigation} />}
+                renderItem={({ item }) => <PlaceCard place={item} navigation={navigation} />}
                 onEndReached={loadMorePlaces}
                 onEndReachedThreshold={0.7}
                 showsVerticalScrollIndicator={false}
                 onRefresh={() => setPage(1)}
                 refreshing={refreshing}
                 ListFooterComponent={
-                    
+
                     loading && <ActivityIndicator size="30" />
                 }
                 horizontal={false}
-                flexWrap="wrap"
-                numColumns={2}
+                // flexWrap="wrap"
+                // numColumns={2}
                 ListHeaderComponent={() => (
                     <>
                         {/* Khu vực header */}
@@ -144,7 +190,7 @@ const Home = ({ navigation }) => {
                                     resizeMode="stretch"
                                     imageStyle={{ borderTopRightRadius: 50, borderTopLeftRadius: 50, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}
                                 >
-                                    <Text style={MyStyle.mainTitle}>Welcome to the Travel app</Text>
+                                    <Text style={MyStyle.mainTitle}>Chào mừng đến với TravelApp</Text>
                                 </ImageBackground>
                             </View>
 
@@ -173,5 +219,6 @@ const Home = ({ navigation }) => {
 
     );
 }
+
 
 export default Home;

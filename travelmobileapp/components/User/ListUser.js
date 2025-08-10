@@ -111,7 +111,9 @@ const ListUser = () => {
                 />
 
                 <Portal>
-                    <Modal visible={visible} onDismiss={hideModal} contentContainerStyle={containerStyle}>
+                    <Modal visible={visible} onDismiss={hideModal}
+                     contentContainerStyle={containerStyle}
+                     >
                         <View style={{ width: "100%" }}>
                             <Image source={selectedUser?.avatar ? { uri: selectedUser?.avatar } : require('../../assets/defaultAvatarAdmin.jpg')} style={styles.avatarModal} />
                             <Text>Username: {selectedUser?.username}</Text>
@@ -120,6 +122,9 @@ const ListUser = () => {
                             <Text>Số điện thoại: {selectedUser?.phone || "Không có"}</Text>
                             <Text>Ngày tham gia: {selectedUser?.date_joined || "Không rõ"}</Text>
                             <Text>Trạng thái: {selectedUser?.is_active ? "Đang hoạt động" : " Đã khóa"}</Text>
+                        </View>
+                        <View>
+                            <Button mode="contained" style={{marginTop: 10}} onPress={() => setVisible(false)}>Đóng</Button>
 
                         </View>
                     </Modal>
@@ -159,7 +164,9 @@ const styles = StyleSheet.create({
         height: 200,
         borderRadius: 30,
         alignSelf: "center",
-        marginBottom: 10
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: "#000000"
     }
 });
 

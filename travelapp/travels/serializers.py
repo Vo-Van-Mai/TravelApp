@@ -115,6 +115,7 @@ class UserSerializer(ModelSerializer):
         user = User(**data)
         user.set_password(data['password'])
         user.role = role
+        user.is_active=True
         user.save()
         return user
 
@@ -126,7 +127,7 @@ class UserSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "email", "password", 'avatar', 'phone', 'date_joined', 'is_active']
+        fields = ["id", "username", "first_name", "last_name", "email", "password", 'avatar', 'phone', 'date_joined', 'is_active', 'is_provider']
         extra_kwargs = {
             "password": {'write_only' : True},
             "avatar": {"error_messages":{
@@ -219,10 +220,14 @@ class FavouriteSerializer(ModelSerializer):
             'username': instance.user.username,
             'avatar': instance.user.avatar.url if instance.user.avatar else ""
         }
+        first_image = instance.place.images.first()
         rep['place'] ={
             'id': instance.place.id,
-            'name': instance.place.name
+            'name': instance.place.name,
+            'image': first_image.url_path.url if first_image else "",
+            'full_address': f"{instance.place.address} {instance.place.ward} {instance.place.province}".strip()
         }
+
         return rep
 
     class Meta:
@@ -242,6 +247,7 @@ class WardSerializer(ModelSerializer):
         fields = '__all__'
 
 
-# class TourSerializer(ModelSerializer):
-#     class Meta:
-#         model = Tour
+class TourSerializer(ModelSerializer):
+    class Meta:
+        model = Tour
+        fields = '__all__'

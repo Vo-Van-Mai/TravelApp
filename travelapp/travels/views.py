@@ -148,8 +148,6 @@ class PlaceViewSet(viewsets.ModelViewSet):
                 return Response(serializers.FavouriteSerializer(like, many=True).data, status=status.HTTP_200_OK)
 
 
-
-
 class RoleViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
     queryset = Role.objects.filter(active=True)
     serializer_class = serializers.RoleSerializer
@@ -172,15 +170,19 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
 
         if self.action in[ 'list', 'retrieve']:
             return [permissions.IsAuthenticated(), perms.IsAdmin()]
+        # if self.action.__eq__('get_favourite_place'):
+        #     return [perms.IsOwnerFavourite()]
 
         return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         query = self.queryset
         role = self.request.query_params.get('role')
+        provider = self.request.query_params.get('provider')
         if role:
             query = query.filter(role=role)
-
+        if provider:
+            query = query.filter(is_provider=provider)
         return query
 
     @action(methods=['post'], url_path="register", detail=False)
@@ -231,6 +233,13 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
         user.is_provider = False
         user.save()
         return Response({"message": "Hủy quyền thành công!"}, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], url_path='get-favourite-place', detail=False)
+    def get_favourite_place(self, request):
+        user = request.user
+        favourite = user.favourites.select_related('place').filter(active=True, is_like=True)
+
+        return Response(serializers.FavouriteSerializer(favourite, many=True).data, status=status.HTTP_200_OK)
 
 
 class ProviderViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.RetrieveAPIView):
@@ -307,5 +316,11 @@ class WardViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView
         if self.request.method.__eq__("GET"):
             return [permissions.AllowAny()]
         return [perms.IsAdmin()]
+
+
+# class FavouriteViewSet(viewsets.ViewSet, generics.ListAPIView):
+#     queryset = Favourite.objects.filter(active=True)
+#     serializer_class = serializers.FavouriteSerializer
+
 
 

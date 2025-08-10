@@ -10,10 +10,12 @@ export const endpoints = {
     'register': '/users/register/',
     'current-user': 'users/current-user/',
     'users': '/users/',
-
+    'verified': (userId) => `/users/${userId}/verified-provider/`,
+    'cancel': (userId) => `/users/${userId}/cancel-provider/`,
     // place endpoint
     'places': '/places/',
     'placeDetail': (id) => `/places/${id}/`,
+    'favourite': '/users/get-favourite-place/',
     
     // comment and rating 
     'comments': (placeId) => `/places/${placeId}/get-comment/`,

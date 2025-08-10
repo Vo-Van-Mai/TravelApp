@@ -277,8 +277,8 @@ class Comment(Review):
 
 
 class Conversation(BaseModel):
-    user_1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="conversations_user1", related_query_name="conversation")
-    user_2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="conversations_user2", related_query_name="conversation")
+    title = models.CharField(max_length=255, null=True)
+    users = models.ManyToManyField(User, related_name="conversations", related_query_name="conversation")
 
 
 class Message(BaseModel):
@@ -287,8 +287,4 @@ class Message(BaseModel):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name="messages", related_query_name="message", null=True)
     def __str__(self):
         return self.content
-
-
-
-
 

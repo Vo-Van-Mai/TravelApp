@@ -92,7 +92,7 @@ const PlaceDetail = ({ route, navigation }) => {
                                 <View style={styles.infoRow}>
                                     <MaterialIcons name="location-on" size={20} color="#666" />
                                     <Text style={styles.label}>Địa chỉ:</Text>
-                                    <Text style={styles.text}>{placeDetail.address}</Text>
+                                    <Text numberOfLines={1} style={styles.text}>{placeDetail.full_address}</Text>
                                 </View>
 
                                 <View style={styles.infoRow}>

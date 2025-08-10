@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Image, SafeAreaView, TouchableOpacity } from "react-native";
+import { Image, SafeAreaView, StyleSheet, TouchableOpacity } from "react-native";
 import { ScrollView, Text, View } from "react-native";
 import MyStyle from "../../styles/MyStyle";
 import Styles from "../User/Styles";
@@ -10,6 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { fill } from "lodash";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import DatetimePiker from "../Header/DatetimePicker";
 
 const AddPlace = () => {
     const info = [{
@@ -40,7 +41,7 @@ const AddPlace = () => {
         field: "ticket_price",
         secureTextEntry: false,
         icon: "text"
-    },{
+    }, {
         label: "Địa chỉ: ví dụ 127 đường Nguyễn Trãi",
         field: "address",
         secureTextEntry: false,
@@ -210,17 +211,37 @@ const AddPlace = () => {
                         THÊM ĐỊA ĐIỂM
                     </Text>
                 </View>
-                {info.map(i => <TextInput
-                    key={i.field}
-                    label={i.label}
-                    secureTextEntry={i.secureTextEntry}
-                    right={<TextInput.Icon icon={i.icon} />}
-                    value={place[i.field]}
-                    onChangeText={t => setState(t, i.field)}
-                    style={MyStyle.m}
-                    multiline={i.field === "description"}
-                    numberOfLines={i.field === "description" ? 10 : 1}
-                />)}
+                {info.map(i =>
+                    i.field === "open_hours" ? (
+                        <View key={i.field} style={{display: "flex", flexDirection: "row", justifyContent: "space-around", alignItems: "center", margin: 10}}>
+                            <TextInput style={{ backgroundColor: "white", width: 130, color: "#000000"}} disabled key={i.field}>{i.label}</TextInput>
+                            <Text style={styles.hours}>{place?.open_hours || ""}</Text>
+                            <DatetimePiker setOpenHours={((val) => setState(val, i.field))} />
+
+                        </View>
+                    ) : i.field === "close_hours" ? (
+                        <View key={i.field} style={{display: "flex", flexDirection: "row", justifyContent: "space-around",alignItems: "center", margin: 10}}>
+                            <TextInput style={{ backgroundColor: "white", width: 130, color: "#000000"}} disabled key={i.field}>{i.label}</TextInput>
+                            <Text style={styles.hours}> {place?.close_hours}</Text>
+                            <DatetimePiker setOpenHours={((val) => setState(val, i.field))} />
+
+                        </View>
+                        
+                    ) : (
+                        <TextInput
+                            key={i.field}
+                            label={i.label}
+                            secureTextEntry={i.secureTextEntry}
+                            right={<TextInput.Icon icon={i.icon} />}
+                            value={place[i.field]}
+                            onChangeText={t => setState(t, i.field)}
+                            style={MyStyle.m}
+                            multiline={i.field === "description"}
+                            numberOfLines={i.field === "description" ? 10 : 1}
+                        />
+                    )
+
+                )}
 
                 <DropdownComponent data={cates} onSelect={selectCategory} title={"Chọn danh mục:"} />
 
@@ -254,5 +275,21 @@ const AddPlace = () => {
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create(
+    {
+        hours: {
+            borderColor: "red", 
+            borderWidth: 1, 
+            width: 150, 
+            height: 55, 
+            textAlign: "center", 
+            textAlignVertical: "center", 
+            fontSize: 20, 
+            backgroundColor: "white"
+        }
+
+    }
+);
 
 export default AddPlace;

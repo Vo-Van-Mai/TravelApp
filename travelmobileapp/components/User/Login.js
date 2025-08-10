@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Apis, { authAPI, endpoints } from "../../configs/Apis";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { MyDispatchContext } from "../../configs/Context";
+import { MyDispatchContext, MyDispatchFavouriteContext } from "../../configs/Context";
 
 const Login = () => {
     const info = [{
@@ -27,6 +27,7 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const nav = useNavigation();
     const dispatch = useContext(MyDispatchContext);
+    const favouriteDispatch = useContext(MyDispatchFavouriteContext);
 
 
     const setState = (value, field) => {
@@ -63,13 +64,22 @@ const Login = () => {
                     let u = await authAPI(res.data.access_token).get(endpoints['current-user']);
                     console.log("curretn-user: ", u.data);
                     
+                    let favourite = await authAPI(res.data.access_token).get(endpoints['favourite']);
+                    console.log("Fauvourite place: ", favourite.data);
+
                     dispatch({
                         "type": "login",
                         "payload": u.data
                     });
+                    
+                    favouriteDispatch({
+                        "type": "set_favourites",
+                        "payload": favourite.data
+                    });
                     nav.navigate("index", {
                         screen: "Home"
                     });
+
                 }
             }
             catch (ex) {

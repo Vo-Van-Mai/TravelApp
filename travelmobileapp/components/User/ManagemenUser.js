@@ -17,7 +17,7 @@ const ManagementUser = () => {
                     <Text style={[styles.m, styles.p, styles.titleName]}>Danh sách người dùng</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.container}>
+                <TouchableOpacity onPress={() => nav.navigate("listProvider")} style={styles.container}>
                     <Icon style={[styles.m, styles.p]} size={iconSize} name="male" />
                     <Text style={[styles.m, styles.p, styles.titleName]}>Danh sách nhà cung cấp</Text>
                 </TouchableOpacity>

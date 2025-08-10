@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, Alert, KeyboardAvoidingView } from "react-native";
 import { Avatar, Card, Button, Divider } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import Apis, { endpoints, authAPI } from "../../configs/Apis";
@@ -158,7 +158,8 @@ const Comment = ({ placeId, onCommentAdded }) => {
                     {/* Add Comment Form */}
                     <Card style={styles.addCommentCard}>
                         <Card.Content>
-                            <TextInput
+                            <KeyboardAvoidingView behavior="height" >
+                                <TextInput
                                 style={styles.commentInput}
                                 placeholder="Viết bình luận của bạn..."
                                 value={newComment}
@@ -166,6 +167,7 @@ const Comment = ({ placeId, onCommentAdded }) => {
                                 multiline
                                 numberOfLines={3}
                             />
+                            </KeyboardAvoidingView>
                             <Button
                                 mode="contained"
                                 onPress={addComment}

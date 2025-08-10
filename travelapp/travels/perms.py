@@ -48,3 +48,11 @@ class IsOwnerRating(permissions.IsAuthenticated):
         return True
 
 
+# class IsOwnerFavourite(permissions.IsAuthenticated):
+#     def has_object_permission(self, request, view, obj):
+#         # Nếu không phải chủ sở hữu
+#         if request.user != obj.user:
+#             self.message = "Bạn không có quyền với hành động này."
+#             return False
+#         return True
+
