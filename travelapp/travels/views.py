@@ -1,5 +1,6 @@
+from cloudinary.provisioning import users
 from idna import ulabel
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.response import Response
 
@@ -7,7 +8,8 @@ from . import serializers, perms
 from .panigation import PlacePagination, CommentPagination, RatingPagination, UserPagination
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action, permission_classes
-from .models import Category, Place, Image, Role, User, Provider, Comment, Rating, Favourite, Province,Payment, TourPlace, Ward
+from .models import Category, Place, Image, Role, User, Provider, Comment, Rating, Favourite, Province, Payment, \
+    TourPlace, Ward, Tour
 from .serializers import ProvinceSerializer
 
 
@@ -252,12 +254,9 @@ class ProviderViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Ret
             return [perms.IsProvider()]
         if self.request.method.__eq__("PATCH") and self.action.__eq__("update_provider"):
             return [perms.IsOwnerProvider()]
+        if self.request.method.__eq__("GET"):
+            return [permissions.IsAuthenticated()]
         return [perms.IsAdmin(), perms.IsProvider()]
-
-    def get_queryset(self):
-        if not self.request.user.is_authenticated:
-            return Provider.objects.none()
-        return self.queryset.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         if hasattr(request.user, 'provider'):
@@ -271,7 +270,7 @@ class ProviderViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Ret
         try:
             return Provider.objects.get(pk=self.kwargs["pk"], user=self.request.user)
         except Provider.DoesNotExist:
-            raise NotFound("Không tìm thấy hồ sơ Provider của bạn.")
+            raise NotFound("Không tìm thấy hồ sơ công ty của bạn.")
 
 
     @action(methods=['patch'], url_path="update-provider", detail=True)
@@ -322,5 +321,82 @@ class WardViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView
 #     queryset = Favourite.objects.filter(active=True)
 #     serializer_class = serializers.FavouriteSerializer
 
+#
+class TourViewSet(viewsets.ModelViewSet):
+    queryset = Tour.objects.filter(active=True).order_by('-id')
+    serializer_class = serializers.TourSerializer
+    pagination_class = PlacePagination
 
+    def get_permissions(self):
+        if self.request.method.__eq__("GET"):
+            return [permissions.AllowAny()]
+        if self.action.__eq__("create"):
+            return [permissions.IsAuthenticated(),perms.IsProvider()]
+        if self.action.__eq__("add_tour_place"):
+            return [perms.IsProvider(), perms.IsOwnerTour()]
+        return [perms.IsOwnerTour()]
+
+
+    def get_serializer_class(self):
+        if self.action.__eq__("list"):
+            return serializers.TourSerializer
+        return serializers.TourDetailSerializer
+
+    def perform_create(self, serializer):
+        try:
+            provider = Provider.objects.get(user=self.request.user)
+        except Provider.DoesNotExist:
+            raise ValidationError("không tìm thấy nhà cung cấp hợp lệ hoặc bạn chưa tạo!")
+        serializer.save(provider=provider)
+
+
+    def get_queryset(self):
+        query = self.queryset
+        provider_id = self.request.query_params.get("provider_id")
+
+
+        if provider_id:
+            query = query.filter(provider_id=provider_id)
+
+        return query
+
+
+    @action(methods=['post'], url_path='tour-place', detail=True)
+    def add_tour_place(self, request, pk=None):
+        tour = self.get_object()
+
+        active_place_ids = list(Place.objects.filter(active=True).values_list('id', flat=True))
+
+        tourplaces_data = request.data.get("tourplaces", [])
+
+        if not isinstance(tourplaces_data, list) or not tourplaces_data:
+            return Response({"detail": "Dữ liệu tourplaces phải là danh sách không rỗng!"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        created_tourplaces = []
+
+        for i, item in enumerate(tourplaces_data):
+            place_id = item.get("place")
+            visit_time = item.get("visit_time")
+            order = item.get("order")
+
+            if not place_id or place_id not in active_place_ids:
+                return Response({"detail": f"Địa điểm tại index {i} không hợp lệ hoặc không active."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            serializer = serializers.TourPlaceSerializer(data={
+                'tour': tour.id,
+                'place': place_id,
+                'visit_time': visit_time,
+                'order': order
+            })
+
+            serializer.is_valid(raise_exception=True)
+            tourplace = serializer.save()
+            created_tourplaces.append(serializer.data)
+
+        # Trả về dữ liệu tour chi tiết sau khi thêm thành công các tourplace
+        tour_serializer = serializers.TourDetailSerializer(tour)
+
+        return Response(tour_serializer.data, status=status.HTTP_201_CREATED)
 

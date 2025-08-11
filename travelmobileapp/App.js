@@ -1,4 +1,4 @@
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Home from "./components/Home/Home";
 import PlaceDetail from "./components/Place/PlaceDetial";
@@ -9,16 +9,26 @@ import Register from "./components/User/Register";
 import { use, useContext, useReducer } from "react";
 import MyUserReducer from "./reducers/MyUserReducer";
 import Profile from "./components/User/Profile";
-import { MyDispatchContext, MyDispatchFavouriteContext, MyFavouriteContext, MyUserContext } from "./configs/Context";
+import { MyDispatchContext, MyDispatchFavouriteContext, MyFavouriteContext, MyProviderContext, MyProviderDispatchContext, MyTourContext, MyTourDispatchContext, MyUserContext } from "./configs/Context";
 import AddPlace from "./components/Place/AddPlace";
 import ListUser from "./components/User/ListUser";
 import ListProvider from "./components/User/ListProvider";
 import Favourite from "./components/Favourite/Favourite";
 import MyFavouritePlaceReducer from "./reducers/MyFavouritePlaceReducer";
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItem, DrawerItemList } from "@react-navigation/drawer";
+import ManagementProvider from "./components/Provider/ManagementProvider";
+import ProfileProvider from "./components/Provider/ProfileProvider";
+import ListTour from "./components/Provider/ListTour";
+import MyTourReducer from "./reducers/MyTourReducer";
+import AddTour from "./components/Provider/AddTour";
+import AddProfile from "./components/Provider/AddProfile";
+import MyProviderReducer from "./reducers/MyProviderReducer";
 
 const Stack = createNativeStackNavigator();
 const ProfileStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const Drawer = createDrawerNavigator();
+
 
 const TabNavigator = () => {
   const user = useContext(MyUserContext);
@@ -37,20 +47,14 @@ const TabNavigator = () => {
           <Tab.Screen name="account" component={ProfileStackNavigator} options={{ tabBarIcon: () => <Icon source="account" size={26}></Icon> }} />
         </>
       }
-
-
-
-
-
-
     </Tab.Navigator>
   );
 }
 
 const StackNavigator = () => {
   return (
-    <Stack.Navigator initialRouteName="Home">
-      <Stack.Screen name="Home" component={Home} options={{title: "Trang chủ"}}></Stack.Screen>
+    <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Home" component={Home} options={{ title: "Trang chủ" }}></Stack.Screen>
       <Stack.Screen name="PlaceDetail" component={PlaceDetail} options={{ title: "Chi tiết địa điểm" }}></Stack.Screen>
     </Stack.Navigator>
   );
@@ -59,7 +63,7 @@ const StackNavigator = () => {
 const ProfileStackNavigator = () => {
   const user = useContext(MyUserContext);
   return (
-    <ProfileStack.Navigator>
+    <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
       {user != null && <ProfileStack.Screen name="profile" component={Profile} options={{ tabBarIcon: () => <Icon source="account-plus" size={26}></Icon>, title: "Tài khoản" }} />}
 
       {user != null && user.role === "admin" && <>
@@ -72,21 +76,84 @@ const ProfileStackNavigator = () => {
   );
 }
 
+const ManagementProviderStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Management" component={ManagementProvider} />
+      <Stack.Screen name="ProfileProvider" component={ProfileProvider} />
+      <Stack.Screen name="ListTour" component={ListTour} />
+      <Stack.Screen name="AddTour" component={AddTour} />
+      <Stack.Screen name="AddProfile" component={AddProfile} />
+    </Stack.Navigator>
+  );
+}
+
+
+const DrawerNavigation = () => {
+  const user = useContext(MyUserContext);
+  return (
+    <Drawer.Navigator  >
+      <Drawer.Screen name="main" component={TabNavigator} options={{ title: "Trang chủ" }} />
+      {user && user.role === "provider" && <>
+        <Drawer.Screen name="managementProvider" component={ManagementProviderStack} options={{ title: "Quản lý công ty" }} />
+
+      </>}
+    </Drawer.Navigator>
+  );
+}
+
+// const MyDrawerItem = (props) => {
+//   const nav = useNavigation();
+//   const { userDispatch } = useContext(MyDispatchContext);
+//   const user = useContext(MyUserContext);
+
+//   const logout = () => {
+//     userDispatch({ type: "logout" });
+//     nav.navigate("index", { screen: "Home" });
+//   };
+
+//   return (
+//     <DrawerContentScrollView {...props}>
+//       <DrawerItemList {...props} />
+//       {user && <DrawerItem label="Đăng xuất" onPress={logout} />}
+//     </DrawerContentScrollView>
+//   );
+// };
+
 const App = () => {
 
   const [user, dispatch] = useReducer(MyUserReducer, null);
+  const [provider, providerDispatch] = useReducer(MyProviderReducer, null);
   const [favourite, favouriteDispatch] = useReducer(MyFavouritePlaceReducer, []);
+  const [tour, tourDispatch] = useReducer(MyTourReducer, []);
 
   return (
     <MyUserContext.Provider value={user}>
       <MyDispatchContext.Provider value={dispatch}>
-        <MyFavouriteContext.Provider value={favourite}>
-          <MyDispatchFavouriteContext.Provider value={favouriteDispatch}>
-            <NavigationContainer>
-              <TabNavigator />
-            </NavigationContainer>
-          </MyDispatchFavouriteContext.Provider>
-        </MyFavouriteContext.Provider>
+
+        <MyProviderContext.Provider value={provider}>
+          <MyProviderDispatchContext.Provider value={providerDispatch}>
+
+              <MyFavouriteContext.Provider value={favourite}>
+                <MyDispatchFavouriteContext.Provider value={favouriteDispatch}>
+
+                  <MyTourContext.Provider value={tour}>
+                    <MyTourDispatchContext.Provider value={tourDispatch}>
+
+                      <NavigationContainer>
+                        <DrawerNavigation />
+                      </NavigationContainer>
+
+                    </MyTourDispatchContext.Provider>
+                  </MyTourContext.Provider>
+
+                </MyDispatchFavouriteContext.Provider>
+              </MyFavouriteContext.Provider>
+
+          </MyProviderDispatchContext.Provider>
+        </MyProviderContext.Provider>
+
+        
       </MyDispatchContext.Provider>
     </MyUserContext.Provider>
   );

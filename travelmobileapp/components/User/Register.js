@@ -9,7 +9,6 @@ import { useNavigation } from "@react-navigation/native";
 
 const Register = () => {
 
-
     const info = [{
         label: "Tên",
         field: "first_name",

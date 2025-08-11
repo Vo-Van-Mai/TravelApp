@@ -111,7 +111,7 @@ class Tour(BaseModel):
     status = models.CharField(max_length=20, choices=TourStatus.choices, default=TourStatus.DRAFT)
     discount = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
     capacity = models.IntegerField()
-    booked = models.IntegerField()
+    booked = models.IntegerField(default=0)
 
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE, related_name="tours", related_query_name="tour")
 

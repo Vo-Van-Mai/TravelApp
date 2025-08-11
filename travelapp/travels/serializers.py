@@ -1,6 +1,8 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
-from .models import Category, Place, Image, User, Role, Provider, Comment, Rating, Favourite, Tour, Province, Ward
+from .models import Category, Place, Image, User, Role, Provider, Comment, Rating, Favourite, Tour, Province, TourPlace, \
+    Ward
+
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -146,10 +148,16 @@ class ProviderSerializer(ModelSerializer):
         province = provider.province.name if provider.province else ""
         return f"{address} {ward} {province}".strip()
 
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['avatar'] = instance.avatar.url if instance.avatar else ""
+        return rep
+
     class Meta:
         model = Provider
-        fields = ['name', 'description', 'avatar', 'user', 'province', 'ward', "full_address" ]
+        fields = ['name', 'description', 'avatar', 'user', 'province', 'ward', "full_address", 'active', 'address' ]
         extra_kwargs = {
+            "active": {"read_only": True},
             "province" :{
                 "error_messages": {
                     "required": "Vui lòng chọn địa chỉ tỉnh/thành phổ!",
@@ -247,7 +255,26 @@ class WardSerializer(ModelSerializer):
         fields = '__all__'
 
 
-class TourSerializer(ModelSerializer):
+class TourSerializer(serializers.ModelSerializer):
+    duration_days = serializers.ReadOnlyField()
+    duration_display = serializers.ReadOnlyField()
+
     class Meta:
         model = Tour
+        fields = ['id', 'created_date', 'title', 'description', 'price', 'start_date', 'end_date', 'status', 'discount', 'capacity',
+                  'booked', 'duration_days', 'duration_display']
+        read_only_fields = ['provider', 'status', 'booked']
+
+
+class TourPlaceSerializer(ModelSerializer):
+    class Meta:
+        model = TourPlace
         fields = '__all__'
+
+
+class TourDetailSerializer(TourSerializer):
+    tourplaces = TourPlaceSerializer(many=True, read_only=True)
+    class Meta:
+        model =TourSerializer.Meta.model
+        fields = TourSerializer.Meta.fields + ['tourplaces']
+

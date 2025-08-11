@@ -8,6 +8,7 @@ import Apis, { authAPI, endpoints } from "../../configs/Apis";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MyDispatchContext, MyDispatchFavouriteContext } from "../../configs/Context";
+import Header from "../Header/Header";
 
 const Login = () => {
     const info = [{
@@ -48,12 +49,12 @@ const Login = () => {
         if (validate() === true) {
             try {
                 setLoading(true);
-                console.log(process.env.REACT_APP_CLIENT_ID);
+                // console.log(process.env.REACT_APP_CLIENT_ID);
 
                 let res = await Apis.post(endpoints['login'], {
                     ...user,
-                    'client_id': "9tvY8f7h4FgF8G2CajadYOz5EM3Q6YRm7YFMvZnK",
-                    'client_secret': "bc8R9ybAtAomaU7ebOF0FRwvwxSIihDxj7Gyjnn08KefpJnm2rlJbWUDzJ46m4ZhMSpru4qUoB2pQxyZTCUt3IIehRKPIzilL4OyCwDpiw3UPwVRtT6iKzWSLdjFrHT9",
+                    'client_id': process.env.REACT_APP_CLIENT_ID,
+                    'client_secret': process.env.REACT_APP_SECRET_KEY,
                     'grant_type': 'password'}, {
                         headers: {'Content-Type': 'application/x-www-form-urlencoded'}
                     });
@@ -96,11 +97,7 @@ const Login = () => {
         <SafeAreaView style={[MyStyle.container, MyStyle.p]}>
 
             <ScrollView>
-                <View style={Styles.headerStyle}>
-                    <Text style={[Styles.titleRegister, MyStyle.m]}>
-                        ĐĂNG NHẬP
-                    </Text>
-                </View>
+                <Header title="ĐĂNG NHẬP" />
                 {info.map(i => <TextInput
                     key={i.field}
                     label={i.label}

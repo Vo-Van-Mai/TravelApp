@@ -25,6 +25,13 @@ export const endpoints = {
 
     'provinces': '/provinces/',
     'wards': '/wards/',
+
+    //provider
+    'provider': '/providers/',
+    'detailProvider': (userId) => `/providers/${userId}/`,
+    
+    //tour
+    'tour': '/tours/',
 };
 
 export const authAPI = (accessToken) => {

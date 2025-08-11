@@ -12,6 +12,7 @@ router.register('comments', views.CommentViewSet, basename='comment')
 router.register('ratings', views.RatingViewSet, basename='rating')
 router.register('provinces', views.ProvinceViewSet, basename='province')
 router.register('wards', views.WardViewSet, basename='ward')
+router.register('tours', views.TourViewSet, basename='tour')
 
 urlpatterns = [
     path('', include(router.urls)),

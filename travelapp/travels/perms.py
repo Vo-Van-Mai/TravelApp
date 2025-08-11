@@ -47,6 +47,13 @@ class IsOwnerRating(permissions.IsAuthenticated):
             return False
         return True
 
+class IsOwnerTour(permissions.IsAuthenticated):
+    def has_object_permission(self, request, view, obj):
+        if request.user.id != obj.provider_id:
+            self.messages="Bạn không phải là chủ sở hữu tour này!"
+            return False
+        else:
+            return True
 
 # class IsOwnerFavourite(permissions.IsAuthenticated):
 #     def has_object_permission(self, request, view, obj):
@@ -55,4 +62,6 @@ class IsOwnerRating(permissions.IsAuthenticated):
 #             self.message = "Bạn không có quyền với hành động này."
 #             return False
 #         return True
+
+
 

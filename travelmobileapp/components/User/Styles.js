@@ -21,9 +21,10 @@ export default StyleSheet.create(
             justifyContent: "center",
             alignItems: "center",
             margin: 5,
-            marginTop: 50,
+            // marginTop: 50,
             borderRadius: 20,
-            backgroundColor: "#ffffff"
+            backgroundColor: "#ffffff",
+            width: "90%"
         },
         avatar: {
             borderRadius: 30,
