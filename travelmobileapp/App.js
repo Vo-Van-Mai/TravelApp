@@ -44,7 +44,7 @@ const TabNavigator = () => {
       {user !== null &&
         <>
           {user !== null && user.role === "traveler" && <Tab.Screen name="favourite" component={Favourite} options={{ tabBarIcon: () => <Icon source="star" size={26}></Icon> }} />}
-          <Tab.Screen name="account" component={ProfileStackNavigator} options={{ tabBarIcon: () => <Icon source="account" size={26}></Icon> }} />
+          <Tab.Screen name="account" component={ProfileStackNavigator} options={{ tabBarIcon: () => <Icon source="account" size={26}></Icon>, title:"Tài khoản" }} />
         </>
       }
     </Tab.Navigator>

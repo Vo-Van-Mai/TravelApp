@@ -216,14 +216,14 @@ const AddPlace = () => {
                         <View key={i.field} style={{display: "flex", flexDirection: "row", justifyContent: "space-around", alignItems: "center", margin: 10}}>
                             <TextInput style={{ backgroundColor: "white", width: 130, color: "#000000"}} disabled key={i.field}>{i.label}</TextInput>
                             <Text style={styles.hours}>{place?.open_hours || ""}</Text>
-                            <DatetimePiker setOpenHours={((val) => setState(val, i.field))} />
+                            <DatetimePiker setOpenHours={((val) => setState(val, i.field)) } mode="time" />
 
                         </View>
                     ) : i.field === "close_hours" ? (
                         <View key={i.field} style={{display: "flex", flexDirection: "row", justifyContent: "space-around",alignItems: "center", margin: 10}}>
                             <TextInput style={{ backgroundColor: "white", width: 130, color: "#000000"}} disabled key={i.field}>{i.label}</TextInput>
                             <Text style={styles.hours}> {place?.close_hours}</Text>
-                            <DatetimePiker setOpenHours={((val) => setState(val, i.field))} />
+                            <DatetimePiker setOpenHours={((val) => setState(val, i.field))} mode="time" />
 
                         </View>
                         
@@ -276,7 +276,7 @@ const AddPlace = () => {
     );
 }
 
-const styles = StyleSheet.create(
+export const styles = StyleSheet.create(
     {
         hours: {
             borderColor: "red", 

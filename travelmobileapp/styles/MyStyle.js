@@ -53,6 +53,11 @@ export default StyleSheet.create(
         color: "red",
         fontSize: 16,
         fontWeight: "bold"
+    },
+
+    infoError: {
+        fontSize: 15, 
+        textAlign: "center" 
     }
 }
 )
