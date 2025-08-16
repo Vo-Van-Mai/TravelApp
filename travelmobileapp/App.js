@@ -23,6 +23,8 @@ import MyTourReducer from "./reducers/MyTourReducer";
 import AddTour from "./components/Provider/AddTour";
 import AddProfile from "./components/Provider/AddProfile";
 import MyProviderReducer from "./reducers/MyProviderReducer";
+import Stats from "./components/Provider/Stats";
+import DetailTour from "./components/Provider/DetailTour";
 
 const Stack = createNativeStackNavigator();
 const ProfileStack = createNativeStackNavigator();
@@ -84,6 +86,8 @@ const ManagementProviderStack = () => {
       <Stack.Screen name="ListTour" component={ListTour} />
       <Stack.Screen name="AddTour" component={AddTour} />
       <Stack.Screen name="AddProfile" component={AddProfile} />
+      <Stack.Screen name="Stats" component={Stats} />
+      <Stack.Screen name="DetailTour" component={DetailTour} />
     </Stack.Navigator>
   );
 }

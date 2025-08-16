@@ -1,4 +1,5 @@
 from cloudinary.provisioning import users
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from idna import ulabel
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.parsers import MultiPartParser, JSONParser
@@ -332,7 +333,7 @@ class TourViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         if self.action.__eq__("create"):
             return [permissions.IsAuthenticated(),perms.IsProvider()]
-        if self.action.__eq__("add_tour_place"):
+        if self.action in ["add_tour_place", "public_tour"]:
             return [perms.IsProvider(), perms.IsOwnerTour()]
         return [perms.IsOwnerTour()]
 
@@ -354,6 +355,11 @@ class TourViewSet(viewsets.ModelViewSet):
         query = self.queryset
         provider_id = self.request.query_params.get("provider_id")
 
+        status = self.request.query_params.get("status")
+
+        if status:
+            query = query.filter(status=status)
+
 
         if provider_id:
             query = query.filter(provider_id=provider_id)
@@ -364,39 +370,55 @@ class TourViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], url_path='tour-place', detail=True)
     def add_tour_place(self, request, pk=None):
         tour = self.get_object()
+        if tour.status == Tour.TourStatus.DRAFT:
 
-        active_place_ids = list(Place.objects.filter(active=True).values_list('id', flat=True))
+            active_place_ids = list(Place.objects.filter(active=True).values_list('id', flat=True))
 
-        tourplaces_data = request.data.get("tourplaces", [])
+            tourplaces_data = request.data.get("tourplaces", [])
 
-        if not isinstance(tourplaces_data, list) or not tourplaces_data:
-            return Response({"detail": "Dữ liệu tourplaces phải là danh sách không rỗng!"},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        created_tourplaces = []
-
-        for i, item in enumerate(tourplaces_data):
-            place_id = item.get("place")
-            visit_time = item.get("visit_time")
-            order = item.get("order")
-
-            if not place_id or place_id not in active_place_ids:
-                return Response({"detail": f"Địa điểm tại index {i} không hợp lệ hoặc không active."},
+            if not isinstance(tourplaces_data, list) or not tourplaces_data:
+                return Response({"detail": "Dữ liệu tourplaces phải là danh sách không rỗng!"},
                                 status=status.HTTP_400_BAD_REQUEST)
 
-            serializer = serializers.TourPlaceSerializer(data={
-                'tour': tour.id,
-                'place': place_id,
-                'visit_time': visit_time,
-                'order': order
-            })
+            created_tourplaces = []
 
-            serializer.is_valid(raise_exception=True)
-            tourplace = serializer.save()
-            created_tourplaces.append(serializer.data)
+            for i, item in enumerate(tourplaces_data):
+                place_id = item.get("place")
+                visit_time = item.get("visit_time")
+                order = item.get("order")
 
-        # Trả về dữ liệu tour chi tiết sau khi thêm thành công các tourplace
-        tour_serializer = serializers.TourDetailSerializer(tour)
+                if not place_id or place_id not in active_place_ids:
+                    return Response({"detail": f"Địa điểm tại index {i} không hợp lệ hoặc không active."},
+                                    status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(tour_serializer.data, status=status.HTTP_201_CREATED)
+                serializer = serializers.TourPlaceSerializer(data={
+                    'tour': tour.id,
+                    'place': place_id,
+                    'visit_time': visit_time,
+                    'order': order
+                })
 
+                serializer.is_valid(raise_exception=True)
+                tourplace = serializer.save()
+                created_tourplaces.append(serializer.data)
+
+            # Trả về dữ liệu tour chi tiết sau khi thêm thành công các tourplace
+            tour_serializer = serializers.TourDetailSerializer(tour)
+
+            return Response(tour_serializer.data, status=status.HTTP_201_CREATED)
+        return Response({"message": "Chỉ tạo địa điểm cho tour nháp!"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+    @action(methods=['post'], detail=True, url_path="public-tour")
+    def public_tour(self, request, pk):
+        tour = self.get_object()
+        tour.status= Tour.TourStatus.PUBLISHED
+        tour.save()
+        return Response(serializers.TourSerializer(tour).data, status=status.HTTP_200_OK)
+
+    @action(methods=['post'], detail=True, url_path="reject-tour")
+    def reject_tour(self, request, pk):
+        tour = self.get_object()
+        tour.status = Tour.TourStatus.REJECTED
+        tour.save()
+        return Response(serializers.TourSerializer(tour).data, status=status.HTTP_200_OK)

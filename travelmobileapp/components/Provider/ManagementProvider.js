@@ -31,7 +31,7 @@ const ManagementProvider = () => {
         "key": "4",
         'title': "Thống kê",
         'icon': "podium",
-        // 'navigate': 'ListTour'
+        'navigate': 'Stats'
     }]
 
     const nav = useNavigation();

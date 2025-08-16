@@ -7,6 +7,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "./CommentStyles";
 import { MyUserContext } from "../../configs/Context";
 
+export const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
 const Comment = ({ placeId, onCommentAdded }) => {
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
@@ -117,16 +128,7 @@ const Comment = ({ placeId, onCommentAdded }) => {
         }
     };
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
+    
 
     const renderComment = ({ item }) => (
         <Card style={styles.commentCard}>

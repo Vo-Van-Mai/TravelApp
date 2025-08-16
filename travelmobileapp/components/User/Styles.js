@@ -9,21 +9,22 @@ export default StyleSheet.create(
             textAlign: "center"
         },
         titleRegister: {
-            color: "red",
+            color: "#011c40",
             fontSize: 24,
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
+            textAlign:"center"
         },
         headerStyle: {
             height: 100,
-            borderColor: "red",
+            borderColor: "#011c40",
             borderWidth: 1,
             justifyContent: "center",
             alignItems: "center",
             margin: 5,
             // marginTop: 50,
             borderRadius: 20,
-            backgroundColor: "#ffffff",
+            backgroundColor: "#a7ebf2",
             width: "90%"
         },
         avatar: {

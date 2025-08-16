@@ -1,3 +1,4 @@
+from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 from .models import Category, Place, Image, User, Role, Provider, Comment, Rating, Favourite, Tour, Province, TourPlace, \
@@ -267,9 +268,12 @@ class TourSerializer(serializers.ModelSerializer):
 
 
 class TourPlaceSerializer(ModelSerializer):
+
+    place = PlaceDetailSerializer(many=False, read_only=True)
+
     class Meta:
         model = TourPlace
-        fields = '__all__'
+        fields = ["visit_time", "order", "tour", "place"]
 
 
 class TourDetailSerializer(TourSerializer):

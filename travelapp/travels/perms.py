@@ -8,7 +8,6 @@ class IsAdmin(permissions.IsAuthenticated):
 
 class IsProvider(permissions.IsAuthenticated):
     def has_permission(self, request, view):
-        print(request.user.role.name)
         return  super().has_permission(request, view) and request.user.is_provider
 
 class IsOwnerProvider(permissions.IsAuthenticated):

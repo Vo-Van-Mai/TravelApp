@@ -96,7 +96,7 @@ const Home = ({ navigation }) => {
     if (place.length === 0) {
         return (
             <View style={MyStyle.container}>
-                
+
                 <View>
                     <Searchbar
                         placeholder="Nhập tên địa điểm..."
@@ -107,12 +107,12 @@ const Home = ({ navigation }) => {
 
                     {/* Khu vực category */}
 
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: "space-around", marginBottom: 10 }}>
-                        <TouchableOpacity onPress={() => setCateId(null)}>
-                            <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} > Tất cả</Chip>
+                    <View style={{ display: "flex", flexWrap: "wrap", flexDirection: "row", marginBottom: 10 }}>
+                        <TouchableOpacity style={{ margin: 4 }} onPress={() => setCateId(null)}>
+                            <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} > Tất cả </Chip>
                         </TouchableOpacity>
                         {
-                            categories.map(c => <TouchableOpacity key={c.id} onPress={() => setCateId(c.id)}>
+                            categories.map(c => <TouchableOpacity style={{ margin: 4 }} key={c.id} onPress={() => setCateId(c.id)}>
                                 <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} >{c.name}</Chip>
                             </TouchableOpacity>)
                         }
@@ -120,15 +120,15 @@ const Home = ({ navigation }) => {
                 </View>
 
                 <View style={[MyStyle.mainHeaderHome]}>
-                                <ImageBackground
-                                    source={require('../../assets/headerCover.png')}
-                                    style={{ width: '100%', height: 200 }}
-                                    resizeMode="stretch"
-                                    imageStyle={{ borderTopRightRadius: 50, borderTopLeftRadius: 50, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}
-                                >
-                                    <Text style={MyStyle.mainTitle}>Welcome to the Travel app</Text>
-                                </ImageBackground>
-                            </View>
+                    <ImageBackground
+                        source={require('../../assets/headerCover.png')}
+                        style={{ width: '100%', height: 200 }}
+                        resizeMode="stretch"
+                        imageStyle={{ borderTopRightRadius: 50, borderTopLeftRadius: 50, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}
+                    >
+                        <Text style={MyStyle.mainTitle}>Welcome to the Travel app</Text>
+                    </ImageBackground>
+                </View>
 
                 <View style={Style.alertContainer}>
                     <View style={Style.alertInfo}>
@@ -151,12 +151,12 @@ const Home = ({ navigation }) => {
 
                 {/* Khu vực category */}
 
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: "space-around", marginBottom: 10 }}>
-                    <TouchableOpacity onPress={() => setCateId(null)}>
-                        <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} > Tất cả</Chip>
+                <View style={{ display: "flex", flexWrap: "wrap", flexDirection: "row", marginBottom: 10 }}>
+                    <TouchableOpacity style={{ margin: 4 }} onPress={() => setCateId(null)}>
+                        <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} > Tất cả </Chip>
                     </TouchableOpacity>
                     {
-                        categories.map(c => <TouchableOpacity key={c.id} onPress={() => setCateId(c.id)}>
+                        categories.map(c => <TouchableOpacity style={{ margin: 4 }} key={c.id} onPress={() => setCateId(c.id)}>
                             <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} >{c.name}</Chip>
                         </TouchableOpacity>)
                     }
