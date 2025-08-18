@@ -12,8 +12,9 @@ import { useNavigation } from "@react-navigation/native";
 
 const ListTour = () => {
     const [loading, setLoading] = useState(false);
-    const tour = useContext(MyTourContext);
-    const tourDispatch = useContext(MyTourDispatchContext);
+    // const tour = useContext(MyTourContext);\
+    // const tourDispatch = useContext(MyTourDispatchContext);
+    const [tour, setTour] = useState([]);
     const user = useContext(MyUserContext);
     const [page, setPage] = useState(1);
     const [statusChoice, setStatusChoice] = useState(null);
@@ -53,10 +54,12 @@ const ListTour = () => {
 
             const resTour = await authAPI(await AsyncStorage.getItem("token")).get(url);
             console.log("resTour", resTour.data.results);
-            tourDispatch({
-                "type": "set_tour",
-                "payload": resTour.data.results
-            });
+            if (page === 1){
+                setTour(...resTour.data.results);
+            }
+            else {
+                setTour(prev => [...prev, resTour.data.results.filter(tour => !prev.some(t => t.id === tour.id))])
+            }
 
         } catch (error) {
             if (error.response.status === 404) {
@@ -67,6 +70,10 @@ const ListTour = () => {
             setLoading(false);
         }
     }
+
+    useEffect(() => {
+        loadTour();
+    }, []);
 
     useEffect(() => {
         loadTour();

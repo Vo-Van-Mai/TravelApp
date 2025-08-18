@@ -108,13 +108,17 @@ const Login = () => {
                     style={MyStyle.m}
                 />)}
 
+                <TouchableOpacity style={{alignItems: "flex-end", paddingRight: 10}}><Text>Quên mật khẩu?</Text></TouchableOpacity>
+
                 <HelperText type="error" style={MyStyle.msg_error} visible={msg}>
                     {msg}
                 </HelperText>
-                <Button loading={loading} disabled={loading} mode="contained" onPress={login} style={MyStyle.m}>Đăng nhập</Button>
+                <Button  loading={loading} disabled={loading} mode="contained" onPress={login} style={MyStyle.m}>Đăng nhập</Button>
+                <View style={{display:"flex", flexDirection: "row", justifyContent: "center"}}>
+                    <Text style={{marginRight: 10, padding: 5}}>Bạn chưa có tài khoản?</Text>
+                    <TouchableOpacity onPress={() => nav.navigate("register")} style={{backgroundColor: "#ffffff", padding: 5}} ><Text style={{color: "green", fontWeight: "bold"}}>Đăng kí</Text></TouchableOpacity>
+                </View>
             </ScrollView>
-
-
         </SafeAreaView>
     );
 }

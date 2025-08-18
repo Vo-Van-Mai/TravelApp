@@ -325,7 +325,7 @@ class WardViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView
 #
 class TourViewSet(viewsets.ModelViewSet):
     queryset = Tour.objects.filter(active=True).order_by('-id')
-    serializer_class = serializers.TourSerializer
+    serializer_class = serializers.TourDetailSerializer
     pagination_class = PlacePagination
 
     def get_permissions(self):
@@ -338,10 +338,10 @@ class TourViewSet(viewsets.ModelViewSet):
         return [perms.IsOwnerTour()]
 
 
-    def get_serializer_class(self):
-        if self.action.__eq__("list"):
-            return serializers.TourSerializer
-        return serializers.TourDetailSerializer
+    # def get_serializer_class(self):
+    #     if self.action.__eq__("list"):
+    #         return serializers.TourSerializer
+    #     return serializers.TourDetailSerializer
 
     def perform_create(self, serializer):
         try:

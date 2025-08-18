@@ -25,6 +25,7 @@ import AddProfile from "./components/Provider/AddProfile";
 import MyProviderReducer from "./reducers/MyProviderReducer";
 import Stats from "./components/Provider/Stats";
 import DetailTour from "./components/Provider/DetailTour";
+import ListTourForTraveller from "./components/Tour/ListTourForTraveller";
 
 const Stack = createNativeStackNavigator();
 const ProfileStack = createNativeStackNavigator();
@@ -37,10 +38,10 @@ const TabNavigator = () => {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="index" component={StackNavigator} options={{ tabBarIcon: () => <Icon source="home" size={26}></Icon>, title: "Trang chủ" }} />
+      <Tab.Screen name="tour" component={TourStackNavigator} options={{ tabBarIcon: () => <Icon source="wallet-travel" size={26}></Icon>, title: "Chuyến đi" }} />
 
       {user === null && <>
-        <Tab.Screen name="login" component={Login} options={{ tabBarIcon: () => <Icon source="account" size={26}></Icon>, title: "Đăng nhập" }} />
-        <Tab.Screen name="register" component={Register} options={{ tabBarIcon: () => <Icon source="account-plus" size={26}></Icon>, title: "Đăng kí" }} />
+        <Tab.Screen name="login" component={AuthStackNavigator} options={{ tabBarIcon: () => <Icon source="account" size={26}></Icon>, title: "Đăng nhập" }} />
       </>}
 
       {user !== null &&
@@ -53,6 +54,15 @@ const TabNavigator = () => {
   );
 }
 
+const AuthStackNavigator = () => {
+  return(
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="authLogin" component={Login}/>
+    <Stack.Screen name="register" component={Register}/>
+  </Stack.Navigator>
+  );
+}
+
 const StackNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
@@ -61,6 +71,17 @@ const StackNavigator = () => {
     </Stack.Navigator>
   );
 }
+
+
+const TourStackNavigator = () => {
+  return(
+    <Stack.Navigator initialRouteName="listTour" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="listTour" component={ListTourForTraveller} options={{ title: "danh sách chuyển đi" }}></Stack.Screen>
+      <Stack.Screen name="detailTour" component={DetailTour} options={{ title: "Chi tiết chuyến đi" }}></Stack.Screen>
+    </Stack.Navigator>
+  );
+}
+
 
 const ProfileStackNavigator = () => {
   const user = useContext(MyUserContext);
