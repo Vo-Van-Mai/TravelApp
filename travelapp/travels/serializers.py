@@ -23,6 +23,11 @@ class ImageSerializer(ModelSerializer):
         fields = ['id', 'url_path']
 
 
+class PlaceItemSerializer(ModelSerializer):
+    class Meta:
+        model = Place
+        fields = ['id', 'name']
+
 class PlaceSerializer(ModelSerializer):
 
     def create(self, validated_data):
@@ -259,21 +264,30 @@ class WardSerializer(ModelSerializer):
 class TourSerializer(serializers.ModelSerializer):
     duration_days = serializers.ReadOnlyField()
     duration_display = serializers.ReadOnlyField()
-
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['provider'] = {
+            "id": instance.provider_id,
+            "name": instance.provider.name,
+            "avatar": instance.provider.avatar.url if instance.provider.avatar else ""
+        }
+        return rep
     class Meta:
         model = Tour
         fields = ['id', 'created_date', 'title', 'description', 'price', 'start_date', 'end_date', 'status', 'discount', 'capacity',
-                  'booked', 'duration_days', 'duration_display']
+                  'booked', 'duration_days', 'duration_display', "provider"]
         read_only_fields = ['provider', 'status', 'booked']
-
 
 class TourPlaceSerializer(ModelSerializer):
 
     place = PlaceDetailSerializer(many=False, read_only=True)
+    place_id = serializers.PrimaryKeyRelatedField(
+        queryset=Place.objects.all(), source="place", write_only=True
+    )
 
     class Meta:
         model = TourPlace
-        fields = ["visit_time", "order", "tour", "place"]
+        fields = ["visit_time", "order", "tour", "place", "place_id"]
 
 
 class TourDetailSerializer(TourSerializer):
@@ -281,4 +295,5 @@ class TourDetailSerializer(TourSerializer):
     class Meta:
         model =TourSerializer.Meta.model
         fields = TourSerializer.Meta.fields + ['tourplaces']
+        read_only_fields = TourSerializer.Meta.read_only_fields
 

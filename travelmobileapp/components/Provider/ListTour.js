@@ -9,15 +9,18 @@ import Header from "../Header/Header";
 import MyStyle from "../../styles/MyStyle";
 import { Chip } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
+import { FlatList } from "react-native";
+import LoadingItem from "../Header/LoadingItem";
 
 const ListTour = () => {
     const [loading, setLoading] = useState(false);
-    // const tour = useContext(MyTourContext);\
+    // const tour = useContext(MyTourContext);
     // const tourDispatch = useContext(MyTourDispatchContext);
     const [tour, setTour] = useState([]);
     const user = useContext(MyUserContext);
     const [page, setPage] = useState(1);
     const [statusChoice, setStatusChoice] = useState(null);
+    const [hasMore, setHasMore] = useState(false);
     const nav = useNavigation();
 
     const status = [{
@@ -53,18 +56,23 @@ const ListTour = () => {
             }
 
             const resTour = await authAPI(await AsyncStorage.getItem("token")).get(url);
-            console.log("resTour", resTour.data.results);
-            if (page === 1){
-                setTour(...resTour.data.results);
+            if (page === 1) {
+                setTour(resTour.data.results);
             }
             else {
-                setTour(prev => [...prev, resTour.data.results.filter(tour => !prev.some(t => t.id === tour.id))])
+                setTour(prev => [
+                    ...prev,
+                    ...resTour.data.results.filter(tour => !prev.some(t => t.id === tour.id))
+                ]);
+                setHasMore(false);
             }
 
         } catch (error) {
             if (error.response.status === 404) {
                 setPage(0);
-                console.log(error)
+                console.log(error);
+                setHasMore(false);
+
             }
         } finally {
             setLoading(false);
@@ -72,36 +80,58 @@ const ListTour = () => {
     }
 
     useEffect(() => {
-        loadTour();
-    }, []);
+        if (!loading && page > 0) {
+            loadTour();
+        }
+    }, [page]);
 
     useEffect(() => {
-        loadTour();
+        setPage(1);
     }, [statusChoice]);
-
-    if (!tour || tour.length === 0) {
+ 
+    if (loading && !hasMore) {
         return (
-            <View style={MyStyle.container}>
-                <View style={{ display: "flex", flexWrap: "wrap", flexDirection: "row" }}>
-                    {status.map(s => <TouchableOpacity onPress={() => setStatusChoice(s.value)} style={{ margin: 4 }} key={s.label}>
-                        <Chip >{s.label}</Chip>
-                    </TouchableOpacity>)}
-                </View>
-                <Header title={"Chưa có tour nào!"} />
-
-            </View>
+            <LoadingItem />
         );
     }
+
+    const loadMore = () => {
+        if (!loading && page > 0) {
+            console.log("loadmore")
+            setPage(page + 1);
+            setHasMore(true);
+        }
+    }
+
     return (
         <View style={[MyStyle.container, { paddingTop: 10 }]}>
-            <View style={{ display: "flex", flexWrap: "wrap", flexDirection: "row" }}>
-                {status.map(s => <TouchableOpacity onPress={() => setStatusChoice(s.value)} style={{ margin: 4 }} key={s.label}>
-                    <Chip >{s.label}</Chip>
-                </TouchableOpacity>)}
-            </View>
-            {tour.map(t => <TouchableOpacity onPress={() => nav.navigate("DetailTour", {"tourId": t.id})} key={t.id}>
-                <TourCard tour={t} />
-            </TouchableOpacity>)}
+
+            <FlatList
+                data={tour}
+                renderItem={({ item }) => <TourCard tour={item} />}
+                keyExtractor={(item) => item.id.toString()} 
+                onEndReached={loadMore}
+                // onEndReachedThreshold={0.8}
+                ListEmptyComponent={
+                    <View style={MyStyle.container}>
+                        <Header title={"Chưa có tour nào!"} />
+                    </View>
+                }
+                ListHeaderComponent={
+                    <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+                        {status.map(s => (
+                            <TouchableOpacity
+                                onPress={() => setStatusChoice(s.value)}
+                                style={{ margin: 4 }}
+                                key={s.label}
+                            >
+                                <Chip>{s.label}</Chip>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                }
+            />
+
         </View>
     );
 }

@@ -16,7 +16,7 @@ export default StyleSheet.create(
             textAlign:"center"
         },
         headerStyle: {
-            height: 100,
+            height: 60,
             borderColor: "#011c40",
             borderWidth: 1,
             justifyContent: "center",

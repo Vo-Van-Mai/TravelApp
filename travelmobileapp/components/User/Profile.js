@@ -1,5 +1,5 @@
 import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
-import { MyDispatchContext, MyUserContext } from "../../configs/Context";
+import { MyDispatchContext, MyDispatchFavouriteContext, MyUserContext } from "../../configs/Context";
 import { useContext } from "react";
 import Styles from "./Styles";
 import { useNavigation } from "@react-navigation/native";
@@ -8,15 +8,19 @@ import MyStyle from "../../styles/MyStyle";
 import ManagementUser from "./ManagemenUser";
 import { FontAwesome } from "@expo/vector-icons";
 
-const LeftContent = props => <Avatar.Icon {...props} icon="folder" />
 
 const Profile = () => {
     const user = useContext(MyUserContext);
     const userDispatch = useContext(MyDispatchContext);
+    const fauvouriteDispatch = useContext(MyDispatchFavouriteContext);
     const nav = useNavigation();
     const logout = () => {
         userDispatch({
             "type": "logout"
+        });
+        fauvouriteDispatch({
+            "type": "set_favourites",
+            "dispatch": []
         });
         nav.navigate("index", {
             screen: "Home"

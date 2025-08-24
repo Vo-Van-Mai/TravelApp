@@ -46,7 +46,7 @@ const PlaceCard = ({ place, navigation, width }) => {
   }
     return (
 
-      <View style={[PlaceStyle.container, { width: width || '95%' }]}>
+      <View style={[PlaceStyle.container, { width: width || '90%', alignSelf: "center" }]}>
         <Card style={PlaceStyle.bgColor}>
           
           <Card.Cover source={{ uri: place.images?.[0]?.url_path || "None" }} />
@@ -57,10 +57,15 @@ const PlaceCard = ({ place, navigation, width }) => {
 
           <Card.Actions>
             <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-around", width: "100%", alignItems: "center" }}>
+              {!user || user?.role === "traveler" ? <>
               <TouchableOpacity onPress={handleLike}>
                 {favourite?.some(f => f.place?.id === place?.id && f.is_like) ? <Icon name='heart' color="red" size={20}></Icon> : <Icon name='heart-o' size={20}></Icon>}
               </TouchableOpacity>
               <Button mode="contained" onPress={() => navigation.navigate("PlaceDetail", { "placeId": place.id })} style={{ backgroundColor: "#84d5e9ff" }}>Chi tiết</Button>
+              </> : 
+              <Button width={"90%"} mode="contained" onPress={() => navigation.navigate("PlaceDetail", { "placeId": place.id })} style={{ backgroundColor: "#84d5e9ff" }}>Chi tiết</Button>
+              }
+              
 
             </View>
           </Card.Actions>

@@ -3,14 +3,23 @@ import { StyleSheet } from "react-native";
 export default StyleSheet.create({
     container:{
         margin: 10,
-        width: 200,
-        borderColor: "red",
+        // width: 200,
+        // borderColor: "red",
         borderWidth: 1,
         borderRadius: 10,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+
     },
     
     bgColor: {
-        backgroundColor: "#aedaff",
+        // backgroundColor: "#aedaff",
+        backgroundColor: '#ffffff',
     },
 
     // Rating styles

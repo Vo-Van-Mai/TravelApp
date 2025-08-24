@@ -1,5 +1,6 @@
 from cloudinary.provisioning import users
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.db.models.functions import Trunc
 from idna import ulabel
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.parsers import MultiPartParser, JSONParser
@@ -38,6 +39,12 @@ class PlaceViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         else:
             return [permissions.IsAuthenticated(), perms.IsAdmin()]
+
+    def list(self, request, *args, **kwargs):
+        if request.query_params.get('all') == 'true':
+            self.pagination_class = None
+            self.serializer_class= serializers.PlaceItemSerializer
+        return super().list(request, *args, **kwargs)
 
 
     def get_queryset(self):
@@ -367,10 +374,18 @@ class TourViewSet(viewsets.ModelViewSet):
         return query
 
 
+    @action(methods=['get'], url_path="get-tourplace", detail=True)
+    def get_tour_place(self, request, pk):
+        tour = self.get_object()
+        tour_place = TourPlace.objects.filter(tour=tour)
+        return Response(serializers.TourPlaceSerializer(tour_place, many=True).data, status = status.HTTP_200_OK)
+
+
+
     @action(methods=['post'], url_path='tour-place', detail=True)
     def add_tour_place(self, request, pk=None):
         tour = self.get_object()
-        if tour.status == Tour.TourStatus.DRAFT:
+        if tour.status != Tour.TourStatus.REJECTED:
 
             active_place_ids = list(Place.objects.filter(active=True).values_list('id', flat=True))
 
@@ -383,7 +398,7 @@ class TourViewSet(viewsets.ModelViewSet):
             created_tourplaces = []
 
             for i, item in enumerate(tourplaces_data):
-                place_id = item.get("place")
+                place_id = item.get("place_id")
                 visit_time = item.get("visit_time")
                 order = item.get("order")
 
@@ -393,13 +408,13 @@ class TourViewSet(viewsets.ModelViewSet):
 
                 serializer = serializers.TourPlaceSerializer(data={
                     'tour': tour.id,
-                    'place': place_id,
+                    'place_id': place_id,
                     'visit_time': visit_time,
                     'order': order
                 })
 
                 serializer.is_valid(raise_exception=True)
-                tourplace = serializer.save()
+                serializer.save()
                 created_tourplaces.append(serializer.data)
 
             # Trả về dữ liệu tour chi tiết sau khi thêm thành công các tourplace

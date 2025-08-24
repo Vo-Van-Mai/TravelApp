@@ -7,11 +7,13 @@ import MyStyle from "../../styles/MyStyle";
 import { styles } from "../Place/AddPlace";
 import { authAPI, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
 const AddTour = () => {
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState("");
     const [newTour, setNewTour] = useState({});
+    const nav = useNavigation();
     const setState = (value, field) => {
         setNewTour({ ...newTour, [field]: value });
     }
@@ -91,9 +93,6 @@ const AddTour = () => {
             setMsg("Ngày bắt đầu lớn hơn ngày kết thúc!");
             return (false);
         }
-
-
-
         setMsg("");
         return true;
     }
@@ -111,7 +110,6 @@ const AddTour = () => {
                     "end_date": formatDateToISO(newTour.end_date),
                     "discount": newTour.discount,
                     "capacity": newTour.capacity
-
                 }
 
                 console.log("data", data);
@@ -120,7 +118,8 @@ const AddTour = () => {
                 const res = await authAPI(await AsyncStorage.getItem("token")).post(url, data);
                 console.log("res", res.data);
                 if (res.data.status === 201) {
-                    console.log("success")
+                    console.log("success");
+                    nav.goBack();
                 }
 
             } catch (error) {

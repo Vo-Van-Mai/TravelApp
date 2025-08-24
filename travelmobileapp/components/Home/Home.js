@@ -24,11 +24,15 @@ const Home = ({ navigation }) => {
         // console.log(res.data);
     }
 
-    const loadPlaces = async () => {
+    const loadPlaces = async (isRefresh = false) => {
         if (page <= 0) return;
         try {
-            setRefreshing(true)
-            setLoading(true);
+            if (isRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
+
             let url = endpoints['places'] + `?page=${page}`;
             if (q) url += `&name=${q}`;
             if (cateId) url += `&cate=${cateId}`;
@@ -48,22 +52,20 @@ const Home = ({ navigation }) => {
                 ]);
             }
 
-            // Nếu không còn trang tiếp theo
             if (!resPlaces.data.next) {
                 setPage(0);
             }
 
         } catch (error) {
-            // Nếu lỗi 404 thì dừng tải thêm
-            if (error.response.status === 404) {
+            if (error.response?.status === 404) {
                 setPage(0);
             }
-            // console.error("Lỗi khi load places:", error);
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
     };
+
 
     const loadMorePlaces = () => {
         if (!loading && page > 0) {
@@ -85,59 +87,18 @@ const Home = ({ navigation }) => {
             setPage(1);
         }, 500);
         return () => clearTimeout(timer);
-    }, [q, cateId]);
+    }, [q]);
+
+    useEffect(() => {
+        setPage(1);
+        loadPlaces(true);
+    }, [cateId]);
 
 
     useEffect(() => {
         if (page > 0 && !loading)
             loadPlaces();
     }, [page]);
-
-    if (place.length === 0) {
-        return (
-            <View style={MyStyle.container}>
-
-                <View>
-                    <Searchbar
-                        placeholder="Nhập tên địa điểm..."
-                        value={q}
-                        onChangeText={setQ}
-                        style={{ margin: 10, backgroundColor: "#ffffff" }}
-                    />
-
-                    {/* Khu vực category */}
-
-                    <View style={{ display: "flex", flexWrap: "wrap", flexDirection: "row", marginBottom: 10 }}>
-                        <TouchableOpacity style={{ margin: 4 }} onPress={() => setCateId(null)}>
-                            <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} > Tất cả </Chip>
-                        </TouchableOpacity>
-                        {
-                            categories.map(c => <TouchableOpacity style={{ margin: 4 }} key={c.id} onPress={() => setCateId(c.id)}>
-                                <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} >{c.name}</Chip>
-                            </TouchableOpacity>)
-                        }
-                    </View>
-                </View>
-
-                <View style={[MyStyle.mainHeaderHome]}>
-                    <ImageBackground
-                        source={require('../../assets/headerCover.png')}
-                        style={{ width: '100%', height: 200 }}
-                        resizeMode="stretch"
-                        imageStyle={{ borderTopRightRadius: 50, borderTopLeftRadius: 50, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}
-                    >
-                        <Text style={MyStyle.mainTitle}>Welcome to the Travel app</Text>
-                    </ImageBackground>
-                </View>
-
-                <View style={Style.alertContainer}>
-                    <View style={Style.alertInfo}>
-                        <Text style={Style.alertText}>Không có địa điểm nào phù hợp!</Text>
-                    </View>
-                </View>
-            </View>
-        );
-    }
 
     return (
         <SafeAreaView style={MyStyle.container}>
@@ -151,17 +112,31 @@ const Home = ({ navigation }) => {
 
                 {/* Khu vực category */}
 
-                <View style={{ display: "flex", flexWrap: "wrap", flexDirection: "row", marginBottom: 10 }}>
-                    <TouchableOpacity style={{ margin: 4 }} onPress={() => setCateId(null)}>
-                        <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} > Tất cả </Chip>
-                    </TouchableOpacity>
-                    {
-                        categories.map(c => <TouchableOpacity style={{ margin: 4 }} key={c.id} onPress={() => setCateId(c.id)}>
-                            <Chip style={MyStyle.backgroundColor} textStyle={MyStyle.textColor} >{c.name}</Chip>
-                        </TouchableOpacity>)
-                    }
+                <View style={{ flexWrap: "wrap", flexDirection: "row", marginBottom: 10 }}>
+                    <Chip
+                        style={cateId === null ? MyStyle.chipActive : MyStyle.chipNormal}
+                        textStyle={cateId === null ? MyStyle.chipActiveText : MyStyle.chipNormalText}
+                        onPress={() => {setCateId(null);
+                        }}
+                    >
+                        Tất cả
+                    </Chip>
+
+                    {categories.map(c => (
+                        <Chip
+                            key={c.id}
+                            style={cateId === c.id ? MyStyle.chipActive : MyStyle.chipNormal}
+                            textStyle={cateId === c.id ? MyStyle.chipActiveText : MyStyle.chipNormalText}
+                            onPress={() => {setCateId(c.id)
+                                console.log("press", c.id);
+                            }}
+                        >
+                            {c.name}
+                        </Chip>
+                    ))}
                 </View>
             </View>
+
             <FlatList
                 style={{ width: "100%" }}
                 data={place}
@@ -170,7 +145,10 @@ const Home = ({ navigation }) => {
                 onEndReached={loadMorePlaces}
                 onEndReachedThreshold={0.7}
                 showsVerticalScrollIndicator={false}
-                onRefresh={() => setPage(1)}
+                onRefresh={() => {
+                    setPage(1);
+                    loadPlaces(true);
+                }}
                 refreshing={refreshing}
                 ListFooterComponent={
 
@@ -193,9 +171,6 @@ const Home = ({ navigation }) => {
                                     <Text style={MyStyle.mainTitle}>Chào mừng đến với TravelApp</Text>
                                 </ImageBackground>
                             </View>
-
-
-
                             {/* Khu vực ảnh ngang */}
 
                             {/* <Text>
@@ -210,9 +185,17 @@ const Home = ({ navigation }) => {
                                 showsHorizontalScrollIndicator={false}
 
                             /> */}
+
                         </View>
                     </>
                 )}
+                ListEmptyComponent={
+                    <View style={Style.alertContainer}>
+                        <View style={Style.alertInfo}>
+                            <Text style={Style.alertText}>Không có địa điểm nào phù hợp!</Text>
+                        </View>
+                    </View>
+                }
 
             />
         </SafeAreaView>

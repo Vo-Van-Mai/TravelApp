@@ -5,6 +5,8 @@ import { Card, Modal, Portal, Button, PaperProvider, Divider } from "react-nativ
 import { MaterialIcons } from "@expo/vector-icons";
 import Comment from "../Comment/Comment";
 import Rating from "./Rating";
+import LoadingItem from "../Header/LoadingItem";
+import MyStyle from "../../styles/MyStyle";
 
 const PlaceDetail = ({ route, navigation }) => {
     const placeId = route.params.placeId;
@@ -48,10 +50,7 @@ const PlaceDetail = ({ route, navigation }) => {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#0000ff" />
-                <Text style={styles.loadingText}>Đang tải thông tin...</Text>
-            </View>
+            <LoadingItem />
         );
     }
 
@@ -67,6 +66,7 @@ const PlaceDetail = ({ route, navigation }) => {
     return (
         <PaperProvider>
             <FlatList
+            
                 ListHeaderComponent={
                     <View>
                         {/* Main Place Card */}
