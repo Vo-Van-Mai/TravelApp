@@ -6,7 +6,7 @@ from django.db import models
 from cloudinary.models import CloudinaryField
 from ckeditor.fields import RichTextField
 from smart_selects.db_fields import ChainedForeignKey
-
+import requests
 
 class BaseModel(models.Model):
     active = models.BooleanField(default=True)
@@ -72,10 +72,25 @@ class Place(BaseModel):
     province = models.ForeignKey(Province, on_delete=models.PROTECT, related_name="places", related_query_name="place", null=False, blank=False)
     ward = ChainedForeignKey(Ward, chained_field="province", chained_model_field="province", show_all=False, auto_choose=True, sort=True, on_delete=models.PROTECT, null=False, blank=False)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="places", related_query_name="place")
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if not self.latitude or not self.longitude:
+            url = "https://nominatim.openstreetmap.org/search"
+            params = {"q": self.name, "format": "json"}
+            response = requests.get(url, params=params, headers={"User-Agent": "travelapp (contact: maivo0902@gmail.com)"})
+            data = response.json()
+            if data:
+                self.latitude = data[0]["lat"]
+                self.longitude = data[0]["lon"]
+                print("lat", data[0]["lat"] )
+                print("log", data[0]["lon"] )
+
+        super().save(*args, **kwargs)
 
 
 class Provider(BaseModel):

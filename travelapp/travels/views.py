@@ -1,7 +1,4 @@
-from cloudinary.provisioning import users
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.db.models.functions import Trunc
-from idna import ulabel
+import requests
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.response import Response
@@ -12,7 +9,7 @@ from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action, permission_classes
 from .models import Category, Place, Image, Role, User, Provider, Comment, Rating, Favourite, Province, Payment, \
     TourPlace, Ward, Tour
-from .serializers import ProvinceSerializer
+from .serializers import ProvinceSerializer, PlaceDetailSerializer
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
@@ -45,6 +42,27 @@ class PlaceViewSet(viewsets.ModelViewSet):
             self.pagination_class = None
             self.serializer_class= serializers.PlaceItemSerializer
         return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not instance.longitude or not instance.latitude:
+            url = "https://nominatim.openstreetmap.org/search"
+            params = {"q": instance.name, "format": "json"}
+            response = requests.get(url, params=params,
+                                    headers={"User-Agent": "travelapp (contact: maivo0902@gmail.com)"})
+
+            if response.status_code == 200:  # kiểm tra request thành công
+                data = response.json()
+                if data:
+                    instance.latitude = data[0]["lat"]
+                    instance.longitude = data[0]["lon"]
+                    instance.save(update_fields=["latitude", "longitude"])  # save để lưu DB
+                    print("lat", data[0]["lat"])
+                    print("lon", data[0]["lon"])
+
+        serializer = PlaceDetailSerializer(instance)
+        return Response(serializer.data)
+
 
 
     def get_queryset(self):

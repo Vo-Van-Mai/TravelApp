@@ -66,7 +66,7 @@ class PlaceSerializer(ModelSerializer):
         fields = [
             'id', 'name', 'address',
             'open_hours', 'close_hours', 'ticket_price',
-            'province', 'ward', 'category','created_date', 'updated_date'
+            'province', 'ward', 'category','created_date', 'updated_date', 'longitude', 'latitude'
         ]
 
 

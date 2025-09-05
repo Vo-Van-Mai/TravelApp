@@ -160,8 +160,7 @@ const DetailTour = ({ route }) => {
                     <Button 
                         style={[styles.btnFooter, styles.btnSecondary]} 
                         mode="contained" 
-                        buttonColor="#FF9800" 
-                        textColor="#ffffff"
+                        textColor="#000000"
                     >
                         Liên hệ
                     </Button>
@@ -303,6 +302,12 @@ const DetailTour = ({ route }) => {
                             style={styles.providerListItem}
                         />
                     </View>
+
+                    {tour?.tourplaces?.length > 0 &&
+                    <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8, paddingLeft: 4 }}>
+                        Danh sách địa điểm:
+                    </Text>
+                    }
                 </View>    
                 }
                 ListFooterComponent={renderFooterComponent}
@@ -411,7 +416,8 @@ const styles = StyleSheet.create({
     itemContainer: {
         backgroundColor: '#ffffff',
         marginHorizontal: 16,
-        marginVertical: 8,
+        // marginVertical: 8,
+        marginBottom: 8,
         padding: 16,
         borderRadius: 16,
         elevation: 2,
@@ -519,6 +525,7 @@ const styles = StyleSheet.create({
     btnFooter: {
         borderRadius: 25,
         paddingVertical: 8,
+        width: '48%',
     },
     btnPrimary: {
         backgroundColor: '#4CAF50',

@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
 import Apis, { endpoints } from "../../configs/Apis";
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Dimensions, Alert, FlatList } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Dimensions, Alert, FlatList, useWindowDimensions } from "react-native";
 import { Card, Modal, Portal, Button, PaperProvider, Divider } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import Comment from "../Comment/Comment";
 import Rating from "./Rating";
 import LoadingItem from "../Header/LoadingItem";
 import MyStyle from "../../styles/MyStyle";
+import MapItem from "../Header/MapItem";
+import RenderHTML from "react-native-render-html";
 
 const PlaceDetail = ({ route, navigation }) => {
     const placeId = route.params.placeId;
     const windowWidth = Dimensions.get('window').width;
     const windowHeight = Dimensions.get('window').height;
+    const { width } = useWindowDimensions();
 
     const [placeDetail, setPlaceDetail] = useState({});
     const [loading, setLoading] = useState(true);
@@ -87,13 +90,14 @@ const PlaceDetail = ({ route, navigation }) => {
                             />
                             <Card.Content>
                                 <Text style={styles.label}>Mô tả:</Text>
-                                <Text style={styles.text}>{placeDetail.description}</Text>
+                                {/* <Text style={styles.text}>{placeDetail.description}</Text> */}
+                                <RenderHTML source={{html: placeDetail.description}} width={width} />
 
                                 <View style={styles.infoRow}>
                                     <MaterialIcons name="location-on" size={20} color="#666" />
                                     <Text style={styles.label}>Địa chỉ:</Text>
                                     <Text numberOfLines={1} style={styles.text}>{placeDetail.full_address}</Text>
-                                </View>
+                                </View>     
 
                                 <View style={styles.infoRow}>
                                     <MaterialIcons name="access-time" size={20} color="#666" />
@@ -134,6 +138,12 @@ const PlaceDetail = ({ route, navigation }) => {
                             placeId={placeId}
                             onRatingChanged={handleRatingChanged}
                         />
+
+                        {/* Khu vực map */}
+                        {/* <View>
+                            <Text style={[styles.sectionTitle, { marginLeft: 10 }]}>Bản đồ {placeDetail?.latitude}</Text>
+                        <MapItem lat={10.768211} long={106.706670} />
+                        </View> */}
 
                         {/* Khu vực ảnh địa điểm */}
                         {placeDetail.images && placeDetail.images.length > 0 && (
