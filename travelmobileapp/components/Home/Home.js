@@ -110,6 +110,7 @@ const Home = ({ navigation }) => {
                     style={{ margin: 10, backgroundColor: "#ffffff" }}
                 />
 
+
                 {/* Khu vực category */}
 
                 <View style={{ flexWrap: "wrap", flexDirection: "row", marginBottom: 10 }}>

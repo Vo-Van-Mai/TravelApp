@@ -165,7 +165,7 @@ const Register = () => {
             <ScrollView>
                 <View style={Styles.headerStyle}>
                     <Text style={[Styles.titleRegister, MyStyle.m]}>
-                        ĐĂNG KÝ TÀI KHOẢNG
+                        ĐĂNG KÝ TÀI KHOẢN
                     </Text>
                 </View>
                 {info.map(i => <TextInput

@@ -83,7 +83,7 @@ const DetailTour = ({ route }) => {
 
     const renderFooterComponent = () => {
         if (user && user.role === "provider") {
-            if (user?.id !== tour.provider) {
+            if (user?.id !== tour?.provider?.id) {
                 return
             }
             else {
@@ -134,7 +134,7 @@ const DetailTour = ({ route }) => {
                                 <Button 
                                     style={[styles.btnFooter, styles.btnSecondary]} 
                                     mode="contained" 
-                                    buttonColor="#2196F3"
+                                    textColor="#000000"
                                 >
                                     Cập nhật
                                 </Button>
@@ -175,6 +175,7 @@ const DetailTour = ({ route }) => {
                 </View>
             );
         }
+        if (!user) {
         return (
             <View style={styles.loginContainer}>
                 <AlertItem title={"Vui lòng đăng nhập để đặt tour!"} />
@@ -189,6 +190,7 @@ const DetailTour = ({ route }) => {
                 </Button>
             </View>
         );
+    }
     }
 
     return (
@@ -219,11 +221,12 @@ const DetailTour = ({ route }) => {
                             />
                         </View>
 
-                        {user && user.role === "provider" && user.id === tour.provider.id && tour.status!=="published" && (
+                        {user && user.role === "provider" && user.id === tour?.provider?.id && tour.status!=="published" && (
                             <TouchableOpacity style={styles.btnDelete}>
                                 <Icon source="delete-circle-outline" size={24} color="#F44336" />
                                 <Text style={styles.deleteText}> Xóa địa điểm</Text>
                             </TouchableOpacity>
+                            
                         )}
                     </View>
                 }
@@ -231,7 +234,7 @@ const DetailTour = ({ route }) => {
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                        <AlertItem title="Chưa có danh sách địa điểm!" />
-                       {user && user.role=="provider" && tour.provider===user.id && (
+                       {user && user.role=="provider" && tour?.provider?.id===user.id && (
                            <Button 
                                onPress={() => nav.navigate("AddTourPlace", {tourId: tourId})} 
                                style={styles.addPlaceButton} 
