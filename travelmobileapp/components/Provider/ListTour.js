@@ -7,10 +7,11 @@ import { authAPI, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../Header/Header";
 import MyStyle from "../../styles/MyStyle";
-import { Chip } from "react-native-paper";
+import { Chip, PaperProvider } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { FlatList } from "react-native";
 import LoadingItem from "../Header/LoadingItem";
+import { set } from "lodash";
 
 const ListTour = () => {
     const [loading, setLoading] = useState(false);
@@ -87,6 +88,7 @@ const ListTour = () => {
 
     useEffect(() => {
         setPage(1);
+        setTour([]);
     }, [statusChoice]);
  
     if (loading && !hasMore) {
@@ -113,7 +115,7 @@ const ListTour = () => {
                 onEndReached={loadMore}
                 // onEndReachedThreshold={0.8}
                 ListEmptyComponent={
-                    <View style={MyStyle.container}>
+                    !loading && <View style={MyStyle.container}>
                         <Header title={"Chưa có tour nào!"} />
                     </View>
                 }
@@ -137,3 +139,5 @@ const ListTour = () => {
 }
 
 export default ListTour;
+
+

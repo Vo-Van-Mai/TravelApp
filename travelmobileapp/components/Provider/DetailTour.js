@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { use, useContext, useEffect, useState } from "react";
 import Header from "../Header/Header";
 import { MyTourContext, MyUserContext } from "../../configs/Context";
 import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -9,7 +9,7 @@ import { Button, Card, Icon, List } from "react-native-paper";
 import { formatDate } from "../Comment/Comment";
 import FormatCurrency from "../../utils/FormatCurrency";
 import AlertItem from "../Header/AlertItem";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useNavigationState } from "@react-navigation/native";
 
 const DetailTour = ({ route }) => {
     const user = useContext(MyUserContext);
@@ -18,6 +18,7 @@ const DetailTour = ({ route }) => {
     const [loading, setLoading] = useState(false);
     const [tour, setTour] = useState({});
     const nav = useNavigation();
+    const [booking, setBooking] = useState({});
 
     const getDetailTour = async () => {
         try {
@@ -25,6 +26,11 @@ const DetailTour = ({ route }) => {
             const resDetaiTour = await Apis.get(endpoints['detailTour'](tourId));
             console.log("resTourDetail", resDetaiTour.data);
             setTour(resDetaiTour.data);
+            if (user?.role === "traveler") {
+                const resBooking = await authAPI(await AsyncStorage.getItem("token")).get(endpoints['detailTour'](tourId) + "check-booking/");
+                setBooking(resBooking.data);
+                console.log("resBooking", resBooking.data);
+            }
         } catch (error) {
             console.error(error)
         } finally {
@@ -35,20 +41,57 @@ const DetailTour = ({ route }) => {
     const publicTour = async () => {
         try {
             setLoading(true);
-            console.log("press");
-            const res = await authAPI(await AsyncStorage.getItem("token")).post(endpoints["publicTour"](tourId));
-            console.log("res", res.status)
-            if (res.status === 200) {
+            if (tour?.tourplaces?.length === 0) {
+                Alert.alert("Thông báo", "Vui lòng thêm địa điểm cho chuyến đi!", [
+                    {
+                        text: "Đồng ý",
+                    }
+                ])
+            }
+            else {
+                const res = await authAPI(await AsyncStorage.getItem("token")).post(endpoints["publicTour"](tourId));
+                console.log("res", res.status)
+                if (res.status === 200) {
 
-                Alert.alert("Thông báo", "Đã đăng tin thành công!", [
+                    Alert.alert("Thông báo", "Đã đăng tin thành công!", [
+                        {
+                            text: "Đồng ý",
+                            onPress: () => nav.goBack()
+                        }
+                    ])
+                }
+            }
+
+        } catch (error) {
+            if (error.response) {
+                // Server trả về lỗi (status code ngoài 2xx)
+                console.log("Server error:", error.response.status, error.response.data);
+                Alert.alert("Thông báo", `Đã xảy ra lỗi ${error.response.status}`, [
+                    {
+                        text: "Đồng ý",
+                        onPress: () => nav.goBack()
+                    }
+                ])
+            } else if (error.request) {
+                // Request gửi đi nhưng không nhận được phản hồi (network error, timeout...)
+                console.log("Network error:", error.message);
+                Alert.alert("Thông báo", `Đã xảy ra lỗi mạng! Vui lòng thử lại sau`, [
+                    {
+                        text: "Đồng ý",
+                        onPress: () => nav.goBack()
+                    }
+                ])
+            } else {
+                // Lỗi khác khi setup request
+                console.log("Setup error:", error.message);
+                Alert.alert("Thông báo", `Đã xảy ra lỗi! Vui lòng thử lại sau`, [
                     {
                         text: "Đồng ý",
                         onPress: () => nav.goBack()
                     }
                 ])
             }
-        } catch (error) {
-            console.log(error)
+
         } finally {
             setLoading(false);
         }
@@ -71,7 +114,34 @@ const DetailTour = ({ route }) => {
                 ])
             }
         } catch (error) {
-            console.log(error)
+            if (error.response) {
+                // Server trả về lỗi (status code ngoài 2xx)
+                console.log("Server error:", error.response.status, error.response.data);
+                Alert.alert("Thông báo", `Đã xảy ra lỗi (${error.response.data.message})`, [
+                    {
+                        text: "Đồng ý",
+                        onPress: () => nav.goBack()
+                    }
+                ])
+            } else if (error.request) {
+                // Request gửi đi nhưng không nhận được phản hồi (network error, timeout...)
+                console.log("Network error:", error.message);
+                Alert.alert("Thông báo", `Đã xảy ra lỗi mạng! Vui lòng thử lại sau`, [
+                    {
+                        text: "Đồng ý",
+                        onPress: () => nav.goBack()
+                    }
+                ])
+            } else {
+                // Lỗi khác khi setup request
+                console.log("Setup error:", error.message);
+                Alert.alert("Thông báo", `Đã xảy ra lỗi! Vui lòng thử lại sau`, [
+                    {
+                        text: "Đồng ý",
+                        onPress: () => nav.goBack()
+                    }
+                ])
+            }
         } finally {
             setLoading(false);
         }
@@ -79,10 +149,13 @@ const DetailTour = ({ route }) => {
 
     useEffect(() => {
         getDetailTour();
+        // CurrentScreen();
     }, []);
 
+
+
     const renderFooterComponent = () => {
-        if (user && user.role === "provider") {
+        if (user && user?.role === "provider") {
             if (user?.id !== tour?.provider?.id) {
                 return
             }
@@ -91,37 +164,49 @@ const DetailTour = ({ route }) => {
                     case "draft":
                         return (
                             <View style={styles.footer}>
-                                <Button 
-                                    style={[styles.btnFooter, styles.btnSecondary]} 
-                                    mode="contained" 
-                                    buttonColor="#FFD700" 
-                                    textColor="#000000" 
-                                    onPress={() => nav.navigate("AddTourPlace", {tourId: tourId})}
-                                >
-                                    Thêm địa điểm
-                                </Button>
-                                <Button 
-                                    style={[styles.btnFooter, styles.btnPrimary]} 
-                                    mode="contained" 
-                                    loading={loading} 
-                                    disabled={loading} 
-                                    buttonColor="#4CAF50" 
-                                    textColor="#ffffff" 
-                                    onPress={publicTour}
-                                >
-                                    Đăng tin
-                                </Button>
+                                {tour?.tourplaces?.length === 0 ? <>
+                                    <Button
+                                        style={[styles.btnFooter, styles.btnSecondary, { width: "100%" }]}
+                                        mode="contained"
+                                        buttonColor="#FFD700"
+                                        textColor="#000000"
+                                        onPress={() => nav.navigate("managementProvider", { screen: "AddTourPlace", params: { tourId: tourId } })}
+                                    >
+                                        Thêm địa điểm
+                                    </Button>
+                                </> : <>
+                                    <Button
+                                        style={[styles.btnFooter, styles.btnSecondary]}
+                                        mode="contained"
+                                        buttonColor="#FFD700"
+                                        textColor="#000000"
+                                        onPress={() => nav.navigate("managementProvider", { screen: "AddTourPlace", params: { tourId: tourId } })}
+                                    >
+                                        Cập nhật địa điểm
+                                    </Button>
+                                    <Button
+                                        style={[styles.btnFooter, styles.btnPrimary]}
+                                        mode="contained"
+                                        loading={loading}
+                                        disabled={loading}
+                                        buttonColor="#4CAF50"
+                                        textColor="#ffffff"
+                                        onPress={publicTour}
+                                    >
+                                        Đăng tin
+                                    </Button>
+                                </>}
                             </View>
                         );
                     case "rejected":
                         return (
                             <View style={styles.footer}>
-                                <Button 
-                                    style={[styles.btnFooter, styles.btnPrimary, { width: "100%" }]} 
-                                    mode="contained" 
-                                    loading={loading} 
-                                    disabled={loading} 
-                                    buttonColor="#4CAF50" 
+                                <Button
+                                    style={[styles.btnFooter, styles.btnPrimary, { width: "100%" }]}
+                                    mode="contained"
+                                    loading={loading}
+                                    disabled={loading}
+                                    buttonColor="#4CAF50"
                                     onPress={publicTour}
                                 >
                                     Đăng lại
@@ -131,19 +216,19 @@ const DetailTour = ({ route }) => {
                     default:
                         return (
                             <View style={styles.footer}>
-                                <Button 
-                                    style={[styles.btnFooter, styles.btnSecondary]} 
-                                    mode="contained" 
+                                <Button
+                                    style={[styles.btnFooter, styles.btnSecondary]}
+                                    mode="contained"
                                     textColor="#000000"
                                 >
                                     Cập nhật
                                 </Button>
-                                <Button 
-                                    style={[styles.btnFooter, styles.btnDanger]} 
-                                    mode="contained" 
-                                    loading={loading} 
-                                    disabled={loading} 
-                                    buttonColor="#F44336" 
+                                <Button
+                                    style={[styles.btnFooter, styles.btnDanger]}
+                                    mode="contained"
+                                    loading={loading}
+                                    disabled={loading}
+                                    buttonColor="#F44336"
                                     onPress={rejectTour}
                                 >
                                     Xóa
@@ -154,43 +239,55 @@ const DetailTour = ({ route }) => {
             }
         }
 
-        if (user && user.role === "traveler") {
+        if (user && user?.role === "traveler") {
             return (
                 <View style={styles.footer}>
-                    <Button 
-                        style={[styles.btnFooter, styles.btnSecondary]} 
-                        mode="contained" 
+                    <Button
+                        style={[styles.btnFooter, styles.btnSecondary]}
+                        mode="contained"
                         textColor="#000000"
                     >
                         Liên hệ
                     </Button>
-                    <Button 
-                        style={[styles.btnFooter, styles.btnPrimary]} 
-                        mode="contained" 
-                        buttonColor="#4CAF50" 
+                    {booking?.has_booked === 0 ? <>
+                    <Button
+                        style={[styles.btnFooter, styles.btnPrimary]}
+                        mode="contained"
+                        buttonColor="#4CAF50"
                         textColor="#ffffff"
+                        onPress={() => nav.navigate("bookingStack", { screen: "booking", params: { tour: tour } })}
                     >
                         Đặt tour
+                    </Button></>: <>
+                    <Button
+                        style={[styles.btnFooter, styles.btnPrimary]}
+                        mode="contained"
+                        buttonColor="#4CAF50"
+                        textColor="#ffffff"
+                        onPress={() => nav.navigate("bookingStack", { screen: "booking", params: { tour: tour, has_booking: 1 } })}
+                    >
+                        Xem booking
                     </Button>
+                    </>}
                 </View>
             );
         }
         if (!user) {
-        return (
-            <View style={styles.loginContainer}>
-                <AlertItem title={"Vui lòng đăng nhập để đặt tour!"} />
-                <Button 
-                    onPress={() => nav.navigate("login", { "params": { "screen": "authLogin" } })} 
-                    mode="contained" 
-                    buttonColor="#4CAF50" 
-                    textColor="#ffffff" 
-                    style={styles.loginButton}
-                > 
-                    Đăng nhập
-                </Button>
-            </View>
-        );
-    }
+            return (
+                <View style={styles.loginContainer}>
+                    <AlertItem title={"Vui lòng đăng nhập để đặt tour!"} />
+                    <Button
+                        onPress={() => nav.navigate("login", { "params": { "screen": "authLogin" } })}
+                        mode="contained"
+                        buttonColor="#4CAF50"
+                        textColor="#ffffff"
+                        style={styles.loginButton}
+                    >
+                        Đăng nhập
+                    </Button>
+                </View>
+            );
+        }
     }
 
     return (
@@ -210,10 +307,10 @@ const DetailTour = ({ route }) => {
                                 description={item.place?.full_address}
                                 descriptionStyle={styles.placeDescription}
                                 left={() => (
-                                    <TouchableOpacity style={styles.imageContainer}>
-                                        <Image 
-                                            source={{ uri: item?.place?.images[0]?.url_path }} 
-                                            style={styles.placeImage} 
+                                    <TouchableOpacity onPress={() => nav.navigate("placeDetail", { placeId: item.place.id })} style={styles.imageContainer}>
+                                        <Image
+                                            source={{ uri: item?.place?.images[0]?.url_path }}
+                                            style={styles.placeImage}
                                         />
                                     </TouchableOpacity>
                                 )}
@@ -221,97 +318,87 @@ const DetailTour = ({ route }) => {
                             />
                         </View>
 
-                        {user && user.role === "provider" && user.id === tour?.provider?.id && tour.status!=="published" && (
+                        {user && user?.role === "provider" && user.id === tour?.provider?.id && tour.status !== "published" && (
                             <TouchableOpacity style={styles.btnDelete}>
                                 <Icon source="delete-circle-outline" size={24} color="#F44336" />
                                 <Text style={styles.deleteText}> Xóa địa điểm</Text>
                             </TouchableOpacity>
-                            
+
                         )}
                     </View>
                 }
                 keyExtractor={(item) => item.place.id.toString()}
                 ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                       <AlertItem title="Chưa có danh sách địa điểm!" />
-                       {user && user.role=="provider" && tour?.provider?.id===user.id && (
-                           <Button 
-                               onPress={() => nav.navigate("AddTourPlace", {tourId: tourId})} 
-                               style={styles.addPlaceButton} 
-                               mode="contained" 
-                               buttonColor="#4CAF50" 
-                               textColor="#ffffff"
-                           > 
-                               Thêm địa điểm
-                           </Button>
-                       )}
+                    loading && <View style={styles.emptyContainer}>
+                        <AlertItem title="Chưa có danh sách địa điểm!" />
+
                     </View>
                 }
                 ListHeaderComponent={
-                <View style={styles.headerContainer}>
-                    <Card style={styles.tourCard}>
-                        <Card.Content style={styles.cardContent}>
-                            <Text style={styles.tourTitle}> {tour.title}</Text>
-                            <Text style={styles.tourDescription}>Mô tả: {tour.description}</Text>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.infoLabel}>Ngày tạo:</Text>
-                                <Text style={styles.infoValue}>{formatDate(tour.created_date)}</Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.infoLabel}>Trạng thái:</Text>
-                                <Text style={[styles.infoValue, styles.statusText]}>{tour.status}</Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.infoLabel}>Giá:</Text>
-                                <Text style={[styles.infoValue, styles.priceText]}>{FormatCurrency(tour.price)}</Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.infoLabel}>Giảm giá:</Text>
-                                <Text style={styles.infoValue}>{tour.discount}%</Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.infoLabel}>Số lượng hành khách tối đa:</Text>
-                                <Text style={styles.infoValue}>{tour.capacity}</Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.infoLabel}>Thời gian:</Text>
-                                <Text style={styles.infoValue}>{tour.duration_display}</Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.infoLabel}>Ngày bắt đầu:</Text>
-                                <Text style={styles.infoValue}>{tour.start_date}</Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.infoLabel}>Ngày kết thúc:</Text>
-                                <Text style={styles.infoValue}>{tour.end_date}</Text>
-                            </View>
-                        </Card.Content>
-                    </Card>
-                    
-                    <View style={styles.providerContainer}> 
-                        <List.Item
-                            title={tour?.provider?.name}
-                            titleStyle={styles.providerTitle}
-                            description="Thông tin công ty"
-                            descriptionStyle={styles.providerDescription}
-                            left={() => (
-                                <TouchableOpacity style={styles.providerAvatarContainer}>
-                                    <Image 
-                                        source={{ uri: tour?.provider?.avatar }} 
-                                        style={styles.providerAvatar} 
-                                    />
-                                </TouchableOpacity>
-                            )}
-                            style={styles.providerListItem}
-                        />
-                    </View>
+                    <View style={styles.headerContainer}>
+                        <Card style={styles.tourCard}>
+                            <Card.Content style={styles.cardContent}>
+                                <Text style={styles.tourTitle}> {tour.title}</Text>
+                                <Text style={styles.tourDescription}>Mô tả: {tour.description}</Text>
+                                <View style={styles.infoRow}>
+                                    <Text style={styles.infoLabel}>Ngày tạo:</Text>
+                                    <Text style={styles.infoValue}>{formatDate(tour.created_date)}</Text>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <Text style={styles.infoLabel}>Trạng thái:</Text>
+                                    <Text style={[styles.infoValue, styles.statusText]}>{tour.status}</Text>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <Text style={styles.infoLabel}>Giá:</Text>
+                                    <Text style={[styles.infoValue, styles.priceText]}>{FormatCurrency(tour.price)}/người</Text>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <Text style={styles.infoLabel}>Giảm giá (%):</Text>
+                                    <Text style={styles.infoValue}>{tour.discount}%</Text>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <Text style={styles.infoLabel}>Số lượng hành khách tối đa:</Text>
+                                    <Text style={styles.infoValue}>{tour.capacity}</Text>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <Text style={styles.infoLabel}>Thời gian:</Text>
+                                    <Text style={styles.infoValue}>{tour.duration_display}</Text>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <Text style={styles.infoLabel}>Ngày bắt đầu:</Text>
+                                    <Text style={styles.infoValue}>{tour.start_date}</Text>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <Text style={styles.infoLabel}>Ngày kết thúc:</Text>
+                                    <Text style={styles.infoValue}>{tour.end_date}</Text>
+                                </View>
+                            </Card.Content>
+                        </Card>
 
-                    {tour?.tourplaces?.length > 0 &&
-                    <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8, paddingLeft: 4 }}>
-                        Danh sách địa điểm:
-                    </Text>
-                    }
-                </View>    
+                        <View style={styles.providerContainer}>
+                            <List.Item
+                                title={tour?.provider?.name}
+                                titleStyle={styles.providerTitle}
+                                description="Thông tin công ty"
+                                descriptionStyle={styles.providerDescription}
+                                left={() => (
+                                    <TouchableOpacity style={styles.providerAvatarContainer}>
+                                        <Image
+                                            source={{ uri: tour?.provider?.avatar }}
+                                            style={styles.providerAvatar}
+                                        />
+                                    </TouchableOpacity>
+                                )}
+                                style={styles.providerListItem}
+                            />
+                        </View>
+
+                        {tour?.tourplaces?.length > 0 &&
+                            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8, paddingLeft: 4 }}>
+                                Danh sách địa điểm:
+                            </Text>
+                        }
+                    </View>
                 }
                 ListFooterComponent={renderFooterComponent}
                 showsVerticalScrollIndicator={false}
@@ -428,7 +515,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
         shadowRadius: 2,
-        
+
     },
     placeItem: {
         flexDirection: 'row',

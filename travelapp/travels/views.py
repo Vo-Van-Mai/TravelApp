@@ -1,14 +1,26 @@
+import hashlib
+import hmac
+import json
+import math
+import uuid
+
 import requests
+from django.conf import settings
+from django.core.mail import send_mail
+from django.http import JsonResponse, HttpResponse
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from . import serializers, perms
 from .panigation import PlacePagination, CommentPagination, RatingPagination, UserPagination
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action, permission_classes
 from .models import Category, Place, Image, Role, User, Provider, Comment, Rating, Favourite, Province, Payment, \
-    TourPlace, Ward, Tour
+    TourPlace, Ward, Tour, Booking
 from .serializers import ProvinceSerializer, PlaceDetailSerializer
 
 
@@ -32,7 +44,7 @@ class PlaceViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['get_comment', 'get_rating', 'get_favourite'] and self.request.method == 'POST':
             return [permissions.IsAuthenticated()]
-        if self.action in ["list", "retrieve", "get_star_average"] or (self.action in ['get_comment', 'get_rating', 'get_favourite'] and self.request.method=="GET"):
+        if self.action in ["list", "retrieve", "get_star_average"] or (self.action in ['get_comment', 'get_rating', 'get_favourite', 'get_nearby', 'nearby_current'] and self.request.method=="GET"):
             return [permissions.AllowAny()]
         else:
             return [permissions.IsAuthenticated(), perms.IsAdmin()]
@@ -153,7 +165,6 @@ class PlaceViewSet(viewsets.ModelViewSet):
         return Response({"star_average": star_average, "total_rating": count_rating}, status=status.HTTP_200_OK)
 
 
-
     @action(methods=['get', 'post'], detail=True, url_path='get-favourite')
     def get_favourite(self, request, pk):
         if request.method.__eq__("POST"):
@@ -175,6 +186,56 @@ class PlaceViewSet(viewsets.ModelViewSet):
             else:
                 return Response(serializers.FavouriteSerializer(like, many=True).data, status=status.HTTP_200_OK)
 
+    def haversine(self, lat1, lon1, lat2, lon2):
+        import math
+        lat1, lon1, lat2, lon2 = map(float, [lat1, lon1, lat2, lon2])  # ép tất cả về float
+        R = 6371  # km
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) \
+            * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+        c = 2 * math.asin(math.sqrt(a))
+        return R * c
+
+    @action(methods=['get'], detail=True, url_path='nearby')
+    def get_nearby(self, request, pk=None):
+        place = self.get_object()
+
+        if not place.latitude or not place.longitude:
+            return Response({"error": "This place does not have coordinates"}, status=400)
+
+        places = Place.objects.exclude(id=place.id).exclude(latitude__isnull=True).exclude(longitude__isnull=True)
+        distances = []
+
+        for p in places:
+            distance = self.haversine(place.latitude, place.longitude, p.latitude, p.longitude)
+            distances.append((distance, p))
+
+        distances.sort(key=lambda x: x[0])
+        nearest_places = [p for _, p in distances[:5]]
+
+        serializer = serializers.PlaceDetailSerializer(nearest_places, many=True)
+        return Response(serializer.data)
+
+    @action(methods=['get'], detail=False, url_path='nearby-current')
+    def nearby_current(self, request):
+        try:
+            lat = float(request.query_params.get("lat"))
+            lng = float(request.query_params.get("lng"))
+        except (TypeError, ValueError):
+            return Response({"error": "Thiếu hoặc sai định dạng lat/lng"}, status=status.HTTP_400_BAD_REQUEST)
+
+        places = Place.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
+        distances = []
+
+        for p in places:
+            distance = self.haversine(lat, lng, p.latitude, p.longitude)
+            distances.append((distance, p))
+
+        distances.sort(key=lambda x: x[0])
+        nearest_places = [{"distance": round(d, 2), **serializers.PlaceDetailSerializer(p).data} for d, p in distances[:5]]
+
+        return Response(nearest_places, status=status.HTTP_200_OK)
 
 class RoleViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
     queryset = Role.objects.filter(active=True)
@@ -354,6 +415,8 @@ class TourViewSet(viewsets.ModelViewSet):
     pagination_class = PlacePagination
 
     def get_permissions(self):
+        if self.action.__eq__("check_booking"):
+            return [permissions.IsAuthenticated()]
         if self.request.method.__eq__("GET"):
             return [permissions.AllowAny()]
         if self.action.__eq__("create"):
@@ -373,6 +436,7 @@ class TourViewSet(viewsets.ModelViewSet):
             provider = Provider.objects.get(user=self.request.user)
         except Provider.DoesNotExist:
             raise ValidationError("không tìm thấy nhà cung cấp hợp lệ hoặc bạn chưa tạo!")
+
         serializer.save(provider=provider)
 
 
@@ -445,6 +509,9 @@ class TourViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=True, url_path="public-tour")
     def public_tour(self, request, pk):
         tour = self.get_object()
+        tourplaces = tour.tourplaces.all()
+        if tourplaces.count() == 0:
+            return Response({"message": "Chuyến đi này chưa có danh sách địa điểm!"}, status=status.HTTP_400_BAD_REQUEST)
         tour.status= Tour.TourStatus.PUBLISHED
         tour.save()
         return Response(serializers.TourSerializer(tour).data, status=status.HTTP_200_OK)
@@ -452,6 +519,161 @@ class TourViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=True, url_path="reject-tour")
     def reject_tour(self, request, pk):
         tour = self.get_object()
+        if Booking.objects.filter(tour=tour).exists():
+            raise ValidationError({"message": "Không thể hủy tour vì đã có người đặt!"})
         tour.status = Tour.TourStatus.REJECTED
         tour.save()
         return Response(serializers.TourSerializer(tour).data, status=status.HTTP_200_OK)
+
+    @action(methods=['get'],url_path="check-booking", detail=True)
+    def check_booking(self, request, pk):
+        tour = self.get_object()
+        booked = Booking.objects.filter(user=request.user.id, tour=tour.id).first()
+        if not booked:
+            return Response({'has_booked': 0})
+        if booked.status == Booking.BookingStatus.PAID:
+            return Response({"has_booked": 1})
+        return Response({'has_booked': 0})
+
+
+
+class BookingViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):
+    queryset = Booking.objects.select_related("user", "tour__provider").filter(active=True)
+    serializer_class = serializers.BookingSerializer
+
+
+    def get_serializer_class(self):
+        if self.action.__eq__("retrieve"):
+            return serializers.BookingDetailSerializer
+        return serializers.BookingSerializer
+
+
+    def get_permissions(self):
+        if self.action in ["retrieve", "get_booking_by_user_id"]:
+            return [perms.IsOwnerBooking()]
+        return [permissions.IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        tour = serializer.validated_data.get("tour")
+
+        if tour.status != Tour.TourStatus.PUBLISHED:
+            raise ValidationError("Tour này chưa được mở đặt!")
+
+        booking = serializer.save(user=self.request.user)
+
+        payment = serializers.PaymentSerializer(data={
+            "price": booking.total_price,
+        })
+        payment.is_valid(raise_exception=True)
+        payment.save(booking=booking)
+
+        subject = "Xác nhận đặt tour thành công"
+        message = f"""
+                Xin chào {self.request.user.username},
+
+                Bạn đã đặt tour: {tour.title}
+                Ngày bắt đầu: {booking.tour.start_date}
+                Số người: {booking.number_of_people}
+                Tổng tiền: {booking.total_price} VNĐ
+                Mã đặt tour: TOUR_VM_{booking.id}
+                Tình trạng thanh toán: {booking.payment.status}
+
+                Cảm ơn bạn đã sử dụng dịch vụ!
+                """
+        recipient = [self.request.user.email]
+
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            recipient,
+            fail_silently=False
+        )
+
+    @action(detail=True, methods=["post"], url_path="create_payment")
+    def create_payment(self, request, pk=None):
+        booking = self.get_object()  # lấy ra booking theo pk
+        payment = booking.payment  # lấy Payment đã gắn khi booking tạo
+
+        if payment.status != Payment.PaymentStatus.PENDING:
+            return Response({"error": "Booking này đã được xử lý thanh toán."}, status=400)
+
+        amount = str(request.data.get("amount", booking.total_price))  # lấy số tiền từ request hoặc booking
+
+        order_id = str(uuid.uuid4())
+        request_id = str(uuid.uuid4())
+        order_info = f"Thanh toán cho booking #{booking.id}"
+        extra_data = ""
+
+        raw_signature = f"accessKey={settings.MOMO_ACCESS_KEY}&amount={amount}&extraData={extra_data}&ipnUrl={settings.MOMO_NOTIFY_URL}&orderId={order_id}&orderInfo={order_info}&partnerCode={settings.MOMO_PARTNER_CODE}&redirectUrl={settings.MOMO_RETURN_URL}&requestId={request_id}&requestType=captureWallet"
+
+        h = hmac.new(
+            settings.MOMO_SECRET_KEY.encode("utf-8"),
+            raw_signature.encode("utf-8"),
+            hashlib.sha256
+        )
+        signature = h.hexdigest()
+
+        data = {
+            "partnerCode": settings.MOMO_PARTNER_CODE,
+            "accessKey": settings.MOMO_ACCESS_KEY,
+            "requestId": request_id,
+            "amount": amount,
+            "orderId": order_id,
+            "orderInfo": order_info,
+            "redirectUrl": settings.MOMO_RETURN_URL,
+            "ipnUrl": settings.MOMO_NOTIFY_URL,
+            "extraData": extra_data,
+            "requestType": "captureWallet",
+            "signature": signature,
+            "lang": "vi"
+        }
+
+        # cập nhật order_id để sau này Notify còn tìm được
+        payment.order_id = order_id
+        payment.save()
+
+        res = requests.post(settings.MOMO_ENDPOINT, json=data)
+        return Response(res.json())
+
+    @action(methods=["get"], detail=False, url_path="get-list-booking")
+    def get_booking_by_user_id(self, request):
+        bookings = Booking.objects.filter(user_id=request.user)
+        return Response(serializers.BookingDetailSerializer(bookings, many=True).data, status=status.HTTP_200_OK)
+
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class MomoNotify(APIView):
+    def post(self, request):
+        data = request.data
+        print("Notify từ MoMo:", data)
+
+        order_id = data.get("orderId")
+        result_code = str(data.get("resultCode"))
+
+        try:
+            payment = Payment.objects.get(order_id=order_id)
+            booking = payment.booking  # nhờ OneToOneField
+
+            if result_code == "0":
+                payment.status = Payment.PaymentStatus.PAID
+                booking.status = Booking.BookingStatus.PAID
+            else:
+                payment.status = Payment.PaymentStatus.CANCELLED
+                booking.status = Booking.BookingStatus.CANCELED
+
+            payment.save()
+            booking.save()
+            print(f"Update thành công: Payment={payment.status}, Booking={booking.status}")
+
+        except Payment.DoesNotExist:
+            print("Payment không tồn tại với orderId:", order_id)
+
+        return JsonResponse({"message": "success"})
+
+
+
+class MomoReturn(APIView):
+    def get(self, request):
+        return HttpResponse("Thanh toán đã xử lý. Vui lòng quay lại app.")

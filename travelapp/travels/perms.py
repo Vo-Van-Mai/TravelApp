@@ -63,4 +63,19 @@ class IsOwnerTour(permissions.IsAuthenticated):
 #         return True
 
 
+class IsOwnerBooking(permissions.IsAuthenticated):
+    def has_object_permission(self, request, view, obj):
+        if request.user.role.name == "provider":
+            if request.user.id != obj.tour.provider.user_id:
+                self.message="Bạn không phải là chủ sơ hữu tour của booking này!"
+                return False
+            else:
+                return True
+
+        if request.user.id != obj.user_id:
+            self.message="Bạn không phải người đặt tour này"
+            return False
+        else:
+            return True
+
 

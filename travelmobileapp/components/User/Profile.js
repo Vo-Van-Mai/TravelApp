@@ -54,14 +54,14 @@ const Profile = () => {
                 )}
             </View>
 
-            <Button style={styles.m} buttonColor="lightgreen" mode="contained" onPress={() => console.log("update")}>Cập nhật</Button>
+            <Button style={styles.m} buttonColor="lightgreen" mode="contained" onPress={() => nav.navigate("updateProfile")}>Cập nhật</Button>
             <Button style={styles.m} mode="contained" onPress={logout}>Đăng xuất</Button>
 
         </ScrollView>
     );
 }
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
     avatar: {
         borderRadius: 30,
         margin: 5,

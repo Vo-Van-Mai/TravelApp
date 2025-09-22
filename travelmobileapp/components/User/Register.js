@@ -139,7 +139,7 @@ const Register = () => {
                 });
 
                 if (res.status === 201) {
-                    nav.navigate("login");
+                    nav.navigate("login", {screen: "authLogin"});
                 }
             }
             catch (ex) {

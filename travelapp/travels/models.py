@@ -176,11 +176,17 @@ class Booking(BaseModel):
         REJECTED = 'rejected', 'Bị từ chối'
         COMPLETED = 'completed', 'Đã hoàn thành'
 
+    class PaymentMethod(models.TextChoices):
+        CASH = "cash", "Thanh toán tiền mặt"
+        ONLINE = "online", "Ví điện tử"
+
     status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.PENDING)
-    payment_method = models.CharField(max_length=20, default="Ví điện tử")
+    payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.ONLINE)
     user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="bookings")
     tour = models.ForeignKey(Tour, on_delete=models.PROTECT, related_name="bookings")
 
+    class Meta:
+        unique_together = ('user', 'tour')
 
 
 class Payment(BaseModel):
@@ -192,7 +198,7 @@ class Payment(BaseModel):
         CANCELLED = "Cancelled", "Đã hủy"
 
     status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
-
+    order_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
     booking = models.OneToOneField(Booking, on_delete=models.PROTECT, null=True)
 
 

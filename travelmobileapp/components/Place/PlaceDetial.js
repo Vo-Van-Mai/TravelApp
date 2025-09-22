@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Apis, { endpoints } from "../../configs/Apis";
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Dimensions, Alert, FlatList, useWindowDimensions } from "react-native";
-import { Card, Modal, Portal, Button, PaperProvider, Divider } from "react-native-paper";
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Dimensions, Alert, FlatList, useWindowDimensions, Platform, Linking } from "react-native";
+import { Card, Modal, Portal, Button, PaperProvider, Divider, List, Chip } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import Comment from "../Comment/Comment";
 import Rating from "./Rating";
@@ -9,17 +9,21 @@ import LoadingItem from "../Header/LoadingItem";
 import MyStyle from "../../styles/MyStyle";
 import MapItem from "../Header/MapItem";
 import RenderHTML from "react-native-render-html";
+import AlertItem from "../Header/AlertItem";
+import { useNavigation } from "@react-navigation/native";
 
 const PlaceDetail = ({ route, navigation }) => {
     const placeId = route.params.placeId;
-    const windowWidth = Dimensions.get('window').width;
-    const windowHeight = Dimensions.get('window').height;
+    // const windowWidth = Dimensions.get('window').width;
+    // const windowHeight = Dimensions.get('window').height;
     const { width } = useWindowDimensions();
 
     const [placeDetail, setPlaceDetail] = useState({});
     const [loading, setLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(null);
     const [imageModalVisible, setImageModalVisible] = useState(false);
+    const [placeNear, setPlaceNear] = useState([]);
+    const nav = useNavigation();
 
     const loadDetail = async () => {
         try {
@@ -34,8 +38,22 @@ const PlaceDetail = ({ route, navigation }) => {
         }
     };
 
+    const loadPlaceNearBy = async () => {
+        try {
+            let url = endpoints["placeDetail"](placeId) + "nearby/";
+            console.log("url near", url)
+            const res = await Apis.get(url);
+            console.log("PlaceNear: ", placeNear);
+            setPlaceNear(res.data);
+        } catch (error) {
+            console.log(error);
+            setPlaceNear([]);
+        }
+    }
+
     useEffect(() => {
         loadDetail();
+        loadPlaceNearBy();
     }, [placeId]);
 
     const handleImagePress = (image) => {
@@ -50,6 +68,22 @@ const PlaceDetail = ({ route, navigation }) => {
     const handleRatingChanged = () => {
         console.log("Đánh giá thành công!");
     };
+
+    const openMap = (lat, lng, label = "Vị trí") => {
+        let url = "";
+
+        if (Platform.OS === "ios") {
+            // iOS mở Apple Maps
+            url = `http://maps.apple.com/?ll=${lat},${lng}&q=${label}`;
+        } else {
+            // Android mở Google Maps
+            url = `geo:${lat},${lng}?q=${lat},${lng}(${label})`;
+        }
+
+            Linking.openURL(url).catch(() => {
+                Alert.alert("Lỗi", "Không thể mở bản đồ");
+            });
+        };
 
     if (loading) {
         return (
@@ -68,7 +102,7 @@ const PlaceDetail = ({ route, navigation }) => {
 
     return (
         <PaperProvider>
-            <FlatList
+            <FlatList style={MyStyle.container}
             
                 ListHeaderComponent={
                     <View>
@@ -91,7 +125,7 @@ const PlaceDetail = ({ route, navigation }) => {
                             <Card.Content>
                                 <Text style={styles.label}>Mô tả:</Text>
                                 {/* <Text style={styles.text}>{placeDetail.description}</Text> */}
-                                <RenderHTML source={{html: placeDetail.description}} width={width} />
+                                <RenderHTML source={{html: placeDetail.description}} contentWidth={width} />
 
                                 <View style={styles.infoRow}>
                                     <MaterialIcons name="location-on" size={20} color="#666" />
@@ -130,22 +164,24 @@ const PlaceDetail = ({ route, navigation }) => {
                                     <Text style={styles.label}>Phường / Xã:</Text>
                                     <Text style={styles.text}>{placeDetail.ward?.name}</Text>
                                 </View>
+
+                                <View style={styles.infoRow}>
+                                    <MaterialIcons name="map" size={20} color="#666" />
+                                    <TouchableOpacity style={styles.button} onPress={() => openMap(placeDetail.latitude, placeDetail.longitude, placeDetail.name)}>
+                                        <Text style={styles.textButton}>Mở bản đồ</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                
                             </Card.Content>
                         </Card>
 
-                        {/* Rating Section */}
                         <Rating
                             placeId={placeId}
                             onRatingChanged={handleRatingChanged}
                         />
 
-                        {/* Khu vực map */}
-                        {/* <View>
-                            <Text style={[styles.sectionTitle, { marginLeft: 10 }]}>Bản đồ {placeDetail?.latitude}</Text>
-                        <MapItem lat={10.768211} long={106.706670} />
-                        </View> */}
-
-                        {/* Khu vực ảnh địa điểm */}
+                        
                         {placeDetail.images && placeDetail.images.length > 0 && (
                             <View style={styles.galleryContainer}>
                                 <Text style={styles.sectionTitle}>Hình ảnh ({placeDetail.images.length})</Text>
@@ -165,6 +201,26 @@ const PlaceDetail = ({ route, navigation }) => {
                                 </ScrollView>
                             </View>
                         )}
+
+                        {placeNear.length > 0 ? <>
+                            <Text style={styles.sectionTitle}>5 địa điểm lân cận</Text>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={{ gap: 8, paddingVertical: 8 }}
+                                >
+                                {placeNear.map(p => (
+                                    <Chip 
+                                    key={`place${p.id}`} 
+                                    onPress={() => nav.navigate("index", { screen: "PlaceDetail", params: { "placeId": p.id }})}
+                                    >
+                                    {p.name}
+                                    </Chip>
+                                ))}
+                                </ScrollView>
+                        </>:<>
+                        <AlertItem  title={"Không có địa điểm nào gần đây"} />
+                        </>}
 
 
                     </View>
@@ -205,7 +261,7 @@ const PlaceDetail = ({ route, navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
     container: {
         padding: 10,
         backgroundColor: "#fff",
@@ -303,6 +359,26 @@ const styles = StyleSheet.create({
     closeButton: {
         marginTop: 20,
     },
+    button: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2ecc71",   // xanh lá nổi bật
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5, // Android shadow
+    marginLeft: 10
+  },
+  textButton: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
 });
 
 export default PlaceDetail;

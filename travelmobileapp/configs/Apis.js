@@ -17,6 +17,7 @@ export const endpoints = {
     'placeDetail': (id) => `/places/${id}/`,
     'favourite': '/users/get-favourite-place/',
     
+    
     // comment and rating 
     'comments': (placeId) => `/places/${placeId}/get-comment/`,
     'ratings': (placeId) => `/places/${placeId}/get-rating/`,
@@ -33,7 +34,10 @@ export const endpoints = {
     //tour
     'tour': '/tours/',
     'detailTour': (tourId) => `/tours/${tourId}/`,
-    'publicTour': (tourId) => `/tours/${tourId}/public-tour/`
+    'publicTour': (tourId) => `/tours/${tourId}/public-tour/`,
+
+    //booking
+    'booking': '/bookings/'
 };
 
 export const authAPI = (accessToken) => {

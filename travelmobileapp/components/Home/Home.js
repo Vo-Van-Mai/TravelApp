@@ -7,6 +7,10 @@ import Apis, { endpoints } from "../../configs/Apis";
 import PlaceCard from "../Place/PlaceCard";
 import Style from "./Style";
 import DatetimePiker from "../Header/DatetimePicker";
+import AlertItem from "../Header/AlertItem";
+import LoadingItem from "../Header/LoadingItem";
+import { styles } from "../Place/PlaceDetial";
+import * as Location from "expo-location";
 
 const Home = ({ navigation }) => {
     const [place, setPlace] = useState([]);
@@ -17,6 +21,7 @@ const Home = ({ navigation }) => {
     const [q, setQ] = useState();
     const [refreshing, setRefreshing] = useState(false);
     // console.log("Navigation: ", navigation);
+    const [placeNear, setPlacenear] = useState([])
 
     const loadCate = async () => {
         let res = await Apis.get(endpoints['categories']);
@@ -75,10 +80,38 @@ const Home = ({ navigation }) => {
     };
 
 
+     const loadNearbyPlaces = async () => {
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Lỗi", "Ứng dụng cần quyền truy cập vị trí!");
+          setLoading(false);
+          return;
+        }
+
+        let location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+
+        console.log("Vị trí hiện tại:", latitude, longitude);
+
+        let url = `${endpoints["places"]}nearby-current/?lat=${latitude}&lng=${longitude}`;
+        let res = await Apis.get(url);
+        console.log("res near", res.data)
+
+        setPlacenear(res.data);
+      } catch (error) {
+        console.log(error);
+        Alert.alert("Lỗi", "Không thể tải địa điểm gần đây");
+      } finally {
+        setLoading(false);
+      }
+    };
+
 
     useEffect(() => {
         loadCate();
         loadPlaces();
+        loadNearbyPlaces();
     }, []);
 
 
@@ -153,7 +186,7 @@ const Home = ({ navigation }) => {
                 refreshing={refreshing}
                 ListFooterComponent={
 
-                    loading && <ActivityIndicator size="30" />
+                    loading && <LoadingItem></LoadingItem>
                 }
                 horizontal={false}
                 // flexWrap="wrap"
@@ -174,28 +207,29 @@ const Home = ({ navigation }) => {
                             </View>
                             {/* Khu vực ảnh ngang */}
 
-                            {/* <Text>
-                                Danh sách địa điểm nổi bật:
-                            </Text>
-
-                            <FlatList
-                                data={place}
-                                keyExtractor={(item) => item.id.toString() + "header"}
-                                renderItem={({ item }) => <PlaceCard width={"200"} place={item} navigation={navigation} />}
-                                horizontal={true}
-                                showsHorizontalScrollIndicator={false}
-
-                            /> */}
+                            <Text style={styles.sectionTitle}>Địa điểm gần bạn</Text>
+                                {placeNear.length > 0 ? (
+                                <FlatList
+                                    data={placeNear}
+                                    keyExtractor={(item) => `place${item.id}`}
+                                    renderItem={({ item }) => (
+                                    <PlaceCard width={200} place={item} navigation={navigation} />
+                                    )}
+                                    horizontal={true}             // <-- hiển thị ngang
+                                    showsHorizontalScrollIndicator={false} // ẩn thanh cuộn ngang
+                                    contentContainerStyle={{ paddingHorizontal: 10 }}
+                                    ItemSeparatorComponent={() => <View style={{ width: 10 }} />} // khoảng cách giữa các item
+                                />
+                                ) : (
+                                <Text>Không tìm thấy địa điểm nào gần bạn!</Text>
+                                )}
+                            
 
                         </View>
                     </>
                 )}
                 ListEmptyComponent={
-                    <View style={Style.alertContainer}>
-                        <View style={Style.alertInfo}>
-                            <Text style={Style.alertText}>Không có địa điểm nào phù hợp!</Text>
-                        </View>
-                    </View>
+                    !loading && <AlertItem title="Không có địa điểm nào!" />
                 }
 
             />

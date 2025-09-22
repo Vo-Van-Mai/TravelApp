@@ -1,8 +1,10 @@
+from symtable import Class
+
 from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 from .models import Category, Place, Image, User, Role, Provider, Comment, Rating, Favourite, Tour, Province, TourPlace, \
-    Ward
+    Ward, Booking, Payment
 
 
 class CategorySerializer(ModelSerializer):
@@ -272,6 +274,16 @@ class TourSerializer(serializers.ModelSerializer):
             "avatar": instance.provider.avatar.url if instance.provider.avatar else ""
         }
         return rep
+
+    def validate(self, attrs):
+        start_date = attrs.get("start_date")
+        end_date = attrs.get("end_date")
+
+        if start_date and end_date and start_date > end_date:
+            raise serializers.ValidationError("Ngày kết thúc phải lớn hơn ngày bắt đầu")
+
+        return attrs
+
     class Meta:
         model = Tour
         fields = ['id', 'created_date', 'title', 'description', 'price', 'start_date', 'end_date', 'status', 'discount', 'capacity',
@@ -297,3 +309,56 @@ class TourDetailSerializer(TourSerializer):
         fields = TourSerializer.Meta.fields + ['tourplaces']
         read_only_fields = TourSerializer.Meta.read_only_fields
 
+
+class BookingSerializer(ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = ['id', 'created_date', 'total_price','user', 'tour', 'status', 'number_of_people']
+        extra_kwargs = {
+            "user": {'read_only': True},
+            "tour": {"error_messages": {
+                "required": "Vui lòng chọn tour!"
+            }}
+        }
+
+    def validate(self, data):
+        user = self.context['request'].user
+        tour = data["tour"]
+        if Booking.objects.filter(user=user, tour=tour).exists():
+            raise serializers.ValidationError("Bạn đã đặt tour này rồi!")
+
+        return data
+
+class BookingDetailSerializer(BookingSerializer):
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['user'] = {
+            "id": instance.user_id,
+            'username': instance.user.username,
+            "email": instance.user.email,
+            "phone": instance.user.phone
+        }
+        rep['tour'] = {
+            "id": instance.tour_id,
+            "name": instance.tour.title,
+            "provider": instance.tour.provider_id,
+            "provider_name": instance.tour.provider.name,
+            "provider_avatar": instance.tour.provider.avatar.url if instance.tour.provider.avatar else ""
+        }
+
+        return rep
+
+    class Meta:
+        model = BookingSerializer.Meta.model
+        fields = BookingSerializer.Meta.fields
+        extra_kwargs = BookingSerializer.Meta.extra_kwargs
+
+
+class PaymentSerializer(ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ["price", "status", "booking", "created_date"]
+        extra_kwargs = {
+            "booking": {'read_only': True}
+        }

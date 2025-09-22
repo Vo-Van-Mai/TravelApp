@@ -117,7 +117,7 @@ const AddTour = () => {
                 console.log(await AsyncStorage.getItem("token"))
                 const res = await authAPI(await AsyncStorage.getItem("token")).post(url, data);
                 console.log("res", res.data);
-                if (res.data.status === 201) {
+                if (res.status === 201) {
                     console.log("success");
                     nav.goBack();
                 }

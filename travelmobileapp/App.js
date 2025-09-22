@@ -27,17 +27,20 @@ import Stats from "./components/Provider/Stats";
 import DetailTour from "./components/Provider/DetailTour";
 import ListTourForTraveller from "./components/Tour/ListTourForTraveller";
 import AddTourPlace from "./components/TourPlace/AddTourPlace";
+import UpdateProfile from "./components/User/UpdateProfile";
+import Booking from "./components/Booking/Booking";
+import Payment from "./components/Booking/Payment";
+import ListBooking from "./components/Booking/ListBooking";
 
 const Stack = createNativeStackNavigator();
 const ProfileStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
-
 const TabNavigator = () => {
   const user = useContext(MyUserContext);
   return (
-    <Tab.Navigator screenOptions={{ headerShown: true }}>
+    <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="index" component={StackNavigator} options={{ tabBarIcon: () => <Icon source="home" size={26}></Icon>, title: "Trang chủ", headerShown: false }} />
       <Tab.Screen name="tour" component={TourStackNavigator} options={{ tabBarIcon: () => <Icon source="wallet-travel" size={26}></Icon>, title: "Chuyến đi", headerShown: false }} />
 
@@ -47,7 +50,7 @@ const TabNavigator = () => {
 
       {user !== null &&
         <>
-          {user !== null && user.role === "traveler" && <Tab.Screen name="favourite" component={Favourite} options={{ tabBarIcon: () => <Icon source="star" size={26}></Icon> }} />}
+          {user !== null && user.role === "traveler" && <Tab.Screen name="favourites" component={FavouriteStackNavigator} options={{ tabBarIcon: () => <Icon source="star" size={26}></Icon> }} />}
           <Tab.Screen name="account" component={ProfileStackNavigator} options={{ tabBarIcon: () => <Icon source="account" size={26}></Icon>, title:"Tài khoản" }} />
         </>
       }
@@ -68,16 +71,18 @@ const StackNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={Home} options={{ title: "Trang chủ", headerShown: false }}></Stack.Screen>
-      <Stack.Screen name="PlaceDetail" component={PlaceDetail} options={{ title: "Chi tiết địa điểm", headerShown: false, headerStyle: {
-      backgroundColor: '#2196F3', // màu nền header
-    },
-    headerTintColor: '#fff', // màu chữ và icon
-    headerTitleStyle: {
-      fontWeight: 'bold',
-      fontSize: 20,
-    },
-    headerTitleAlign: 'center'  }}></Stack.Screen>
+      <Stack.Screen name="PlaceDetail" component={PlaceDetail} options={{ title: "Chi tiết địa điểm", headerShown: false }}></Stack.Screen>
     </Stack.Navigator>
+  );
+}
+
+
+const FavouriteStackNavigator = () => {
+  return(
+    <Stack.Navigator screenOptions={{ headerShown: false }}>  
+    <Stack.Screen name="favourite" component={Favourite} options={{ title: "Địa điểm yêu thích" }}></Stack.Screen>
+    <Stack.Screen name="placeDetail" component={PlaceDetail} options={{ title: "Địa điểm yêu thích" }}></Stack.Screen>
+  </Stack.Navigator>
   );
 }
 
@@ -87,6 +92,7 @@ const TourStackNavigator = () => {
     <Stack.Navigator initialRouteName="listTour" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="listTour" component={ListTourForTraveller} options={{ title: "danh sách chuyển đi"}}></Stack.Screen>
       <Stack.Screen name="detailTour" component={DetailTour} options={{ title: "Chi tiết chuyến đi" ,headerShown: false}}></Stack.Screen>
+      <Stack.Screen name="placeDetail" component={PlaceDetail} options={{ title: "Địa điểm yêu thích" }}></Stack.Screen>
     </Stack.Navigator>
   );
 }
@@ -96,7 +102,11 @@ const ProfileStackNavigator = () => {
   const user = useContext(MyUserContext);
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
-      {user != null && <ProfileStack.Screen name="profile" component={Profile} options={{ tabBarIcon: () => <Icon source="account-plus" size={26}></Icon>, title: "Tài khoản" }} />}
+      {user != null && 
+      <>
+      <ProfileStack.Screen name="profile" component={Profile} options={{ tabBarIcon: () => <Icon source="account-plus" size={26}></Icon>, title: "Tài khoản" }} />
+      <ProfileStack.Screen name="updateProfile" component={UpdateProfile} options={{ tabBarIcon: () => <Icon source="account" size={26}></Icon>, title: "Cập nhật hồ sơ" }} />
+      </>}
 
       {user != null && user.role === "admin" && <>
         <ProfileStack.Screen name="addPlace" component={AddPlace} options={{ title: "Thêm địa điểm" }} />
@@ -124,14 +134,30 @@ const ManagementProviderStack = () => {
 }
 
 
+const BookingStack = () => {
+  return(
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="listBooking" component={ListBooking} options={{ title: "Danh sách tour đã đặt" }}></Stack.Screen>
+      <Stack.Screen name="booking" component={Booking} options={{ title: "Thông tin đặt tour" }}></Stack.Screen>
+      <Stack.Screen name="payment" component={Payment} options={{ title: "Thông tin đặt tour" }}></Stack.Screen>
+    </Stack.Navigator>
+  );
+
+}
+
+
+
 const DrawerNavigation = () => {
   const user = useContext(MyUserContext);
   return (
     <Drawer.Navigator screenOptions={{headerShown: true}}  >
-      <Drawer.Screen name="main" component={TabNavigator} options={{ title: "Chính", headerShown: true }} />
+      <Drawer.Screen name="main" component={TabNavigator} options={{ title: "Travel app", drawerIcon: () => <Icon source="biathlon" size={26}></Icon> }} />
       {user && user.role === "provider" && <>
         <Drawer.Screen name="managementProvider" component={ManagementProviderStack} options={{ title: "Quản lý công ty" }} />
 
+      </>}
+      {user && user.role === "traveler" && <>
+        <Drawer.Screen name="bookingStack" component={BookingStack} options={{ title: "Tour đã đặt" }} />
       </>}
     </Drawer.Navigator>
   );

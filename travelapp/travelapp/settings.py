@@ -157,7 +157,7 @@ from cloudinary.utils import cloudinary_url
 cloudinary.config(
     cloud_name = "disqxvj3s",
     api_key = "591477333856363",
-    api_secret = "R_tdHJCqiow28KiCrgzMQsRVe8c", # Click 'View API Keys' above to copy your API secret
+    api_secret = "R_tdHJCqiow28KiCrgzMQsRVe8c",
     secure=True
 )
 
@@ -168,6 +168,26 @@ REST_FRAMEWORK = {
 
 
 OAUTH2_PROVIDER = {'OAUTH2_BACKEND_CLASS':'oauth2_provider.oauth2_backends.JSONOAuthLibCore'}
+
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "maivo0902@gmail.com"
+EMAIL_HOST_PASSWORD = "ibeq pkyb ovtk foyn"
+DEFAULT_FROM_EMAIL = "maivo0902@gmail.com"
+
+
+#tích hop Momo
+MOMO_ENDPOINT = "https://test-payment.momo.vn/v2/gateway/api/create"
+MOMO_ACCESS_KEY = "F8BBA842ECF85"
+MOMO_SECRET_KEY = "K951B6PE1waDMi640xX08PD3vg6EkVlz"
+MOMO_PARTNER_CODE = "MOMO"
+MOMO_RETURN_URL = "https://7f924ab407a3.ngrok-free.app/momo/return/"
+MOMO_NOTIFY_URL = "https://7f924ab407a3.ngrok-free.app/momo/notify/"
+
+
 
 CLIENT_ID = "9tvY8f7h4FgF8G2CajadYOz5EM3Q6YRm7YFMvZnK"
 CLIENT_SECRET = "bc8R9ybAtAomaU7ebOF0FRwvwxSIihDxj7Gyjnn08KefpJnm2rlJbWUDzJ46m4ZhMSpru4qUoB2pQxyZTCUt3IIehRKPIzilL4OyCwDpiw3UPwVRtT6iKzWSLdjFrHT9"

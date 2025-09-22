@@ -22,7 +22,7 @@ const Login = () => {
         secureTextEntry: true,
         icon: "eye"
     }]
-
+    const [show, setShow] = useState(true);
     const [user, setUser] = useState({});
     const [msg, setMsg] = useState();
     const [loading, setLoading] = useState(false);
@@ -98,11 +98,19 @@ const Login = () => {
 
             <ScrollView>
                 <Header title="ĐĂNG NHẬP" />
-                {info.map(i => <TextInput
+                {info.map(i => i.field === "password" ? <TextInput
+                    key={i.field}
+                    label={i.label}
+                    secureTextEntry={show}
+                    right={<TextInput.Icon onPress={() => setShow(!show)} icon={i.icon} />}
+                    value={user[i.field]}
+                    onChangeText={t => setState(t, i.field)}
+                    style={MyStyle.m}
+                /> : <TextInput
                     key={i.field}
                     label={i.label}
                     secureTextEntry={i.secureTextEntry}
-                    right={<TextInput.Icon icon={i.icon} />}
+                    right={<TextInput.Icon  icon={i.icon} />}
                     value={user[i.field]}
                     onChangeText={t => setState(t, i.field)}
                     style={MyStyle.m}
