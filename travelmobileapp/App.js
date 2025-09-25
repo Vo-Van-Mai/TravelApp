@@ -129,6 +129,7 @@ const ManagementProviderStack = () => {
       <Stack.Screen name="Stats" component={Stats} />
       <Stack.Screen name="DetailTour" component={DetailTour} />
       <Stack.Screen name="AddTourPlace" component={AddTourPlace} />
+      <Stack.Screen name="ListBooking" component={ListBooking} />
     </Stack.Navigator>
   );
 }

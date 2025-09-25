@@ -37,7 +37,8 @@ export const endpoints = {
     'publicTour': (tourId) => `/tours/${tourId}/public-tour/`,
 
     //booking
-    'booking': '/bookings/'
+    'booking': '/bookings/',
+    'detailBooking': (bookingId) => `/bookings/${bookingId}`
 };
 
 export const authAPI = (accessToken) => {

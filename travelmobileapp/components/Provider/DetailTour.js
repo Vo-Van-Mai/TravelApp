@@ -15,10 +15,12 @@ const DetailTour = ({ route }) => {
     const user = useContext(MyUserContext);
     const listTour = useContext(MyTourContext);
     const tourId = route?.params?.tourId;
+    const bookingId = route?.params?.bookingId || null;
     const [loading, setLoading] = useState(false);
     const [tour, setTour] = useState({});
     const nav = useNavigation();
     const [booking, setBooking] = useState({});
+    const [bookingInfo, setBookingInfo] = useState({});
 
     const getDetailTour = async () => {
         try {
@@ -35,6 +37,17 @@ const DetailTour = ({ route }) => {
             console.error(error)
         } finally {
             setLoading(false);
+        }
+    }
+
+    const loadDetailBooking = async () => {
+        try {
+            setLoading(true);
+            const resBookings = await authAPI(await AsyncStorage.getItem("token")).get(endpoints['detailBooking'](bookingId));
+            console.log("resBookings", resBookings.data);
+            setBookingInfo(resBookings.data);
+        } catch (error) {
+            console.error(error)
         }
     }
 
@@ -61,7 +74,6 @@ const DetailTour = ({ route }) => {
                     ])
                 }
             }
-
         } catch (error) {
             if (error.response) {
                 // Server trả về lỗi (status code ngoài 2xx)
@@ -91,7 +103,6 @@ const DetailTour = ({ route }) => {
                     }
                 ])
             }
-
         } finally {
             setLoading(false);
         }
@@ -115,7 +126,6 @@ const DetailTour = ({ route }) => {
             }
         } catch (error) {
             if (error.response) {
-                // Server trả về lỗi (status code ngoài 2xx)
                 console.log("Server error:", error.response.status, error.response.data);
                 Alert.alert("Thông báo", `Đã xảy ra lỗi (${error.response.data.message})`, [
                     {
@@ -124,7 +134,6 @@ const DetailTour = ({ route }) => {
                     }
                 ])
             } else if (error.request) {
-                // Request gửi đi nhưng không nhận được phản hồi (network error, timeout...)
                 console.log("Network error:", error.message);
                 Alert.alert("Thông báo", `Đã xảy ra lỗi mạng! Vui lòng thử lại sau`, [
                     {
@@ -133,7 +142,6 @@ const DetailTour = ({ route }) => {
                     }
                 ])
             } else {
-                // Lỗi khác khi setup request
                 console.log("Setup error:", error.message);
                 Alert.alert("Thông báo", `Đã xảy ra lỗi! Vui lòng thử lại sau`, [
                     {
@@ -149,6 +157,9 @@ const DetailTour = ({ route }) => {
 
     useEffect(() => {
         getDetailTour();
+        if(user && user?.role == "provider" && bookingId !== null){
+            loadDetailBooking();
+        }
         // CurrentScreen();
     }, []);
 
@@ -392,18 +403,34 @@ const DetailTour = ({ route }) => {
                                 style={styles.providerListItem}
                             />
                         </View>
+                        {user?.role==="provider" && bookingId &&(
+                            <View style={styles.providerContainer}>
+                            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8, paddingLeft: 4 }}>
+                                Thông tin khách đặt:
+                            </Text>
+                            <Text style={styles.tourDescription}>Tên người đặt: {bookingInfo?.user?.last_name + bookingInfo?.user?.first_name}</Text>
+                            <Text style={styles.tourDescription}>Email: {bookingInfo?.user?.email}</Text>
+                            <Text style={styles.tourDescription}>Số điện thoại: {bookingInfo?.user?.phone}</Text>
+                            <Text style={styles.tourDescription}>Số lượng hành khách: {bookingInfo?.number_of_people}</Text>
+                            <Text style={styles.tourDescription}>Tổng tiền: {FormatCurrency(bookingInfo?.total_price)}</Text>
+                                
+                        </View>
+                        )}
 
                         {tour?.tourplaces?.length > 0 &&
                             <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8, paddingLeft: 4 }}>
                                 Danh sách địa điểm:
                             </Text>
                         }
+
+                        
                     </View>
                 }
                 ListFooterComponent={renderFooterComponent}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.listContent}
             />
+            
         </View>
     );
 }

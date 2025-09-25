@@ -549,6 +549,8 @@ class BookingViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.Retrieve
 
 
     def get_permissions(self):
+        if self.action in ["get_booking_by_provider"]:
+            return [permissions.IsAuthenticated(), perms.IsProvider(),perms.IsOwnerBooking()]
         if self.action in ["retrieve", "get_booking_by_user_id"]:
             return [perms.IsOwnerBooking()]
         return [permissions.IsAuthenticated()]
@@ -567,7 +569,7 @@ class BookingViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.Retrieve
         payment.is_valid(raise_exception=True)
         payment.save(booking=booking)
 
-        subject = "Xác nhận đặt tour thành công"
+        subject = "Xác nhận đặt tour"
         message = f"""
                 Xin chào {self.request.user.username},
 
@@ -589,6 +591,13 @@ class BookingViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.Retrieve
             recipient,
             fail_silently=False
         )
+
+    @action(methods=['get'], detail=False, url_path="get-bookings-by-provider")
+    def get_booking_by_provider(self, request):
+        provider = Provider.objects.get(pk=request.user)
+        bookings = Booking.objects.filter(tour__provider=provider)
+        return Response(serializers.BookingDetailSerializer(bookings, many=True).data, status=status.HTTP_200_OK)
+
 
     @action(detail=True, methods=["post"], url_path="create_payment")
     def create_payment(self, request, pk=None):
@@ -642,7 +651,6 @@ class BookingViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.Retrieve
         return Response(serializers.BookingDetailSerializer(bookings, many=True).data, status=status.HTTP_200_OK)
 
 
-
 @method_decorator(csrf_exempt, name="dispatch")
 class MomoNotify(APIView):
     def post(self, request):
@@ -655,16 +663,20 @@ class MomoNotify(APIView):
         try:
             payment = Payment.objects.get(order_id=order_id)
             booking = payment.booking  # nhờ OneToOneField
+            tour = booking.tour
 
             if result_code == "0":
                 payment.status = Payment.PaymentStatus.PAID
                 booking.status = Booking.BookingStatus.PAID
+                tour.booked = tour.booked + 1
             else:
                 payment.status = Payment.PaymentStatus.CANCELLED
                 booking.status = Booking.BookingStatus.CANCELED
 
+
             payment.save()
             booking.save()
+            tour.save()
             print(f"Update thành công: Payment={payment.status}, Booking={booking.status}")
 
         except Payment.DoesNotExist:

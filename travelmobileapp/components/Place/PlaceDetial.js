@@ -71,7 +71,6 @@ const PlaceDetail = ({ route, navigation }) => {
 
     const openMap = (lat, lng, label = "Vị trí") => {
         let url = "";
-
         if (Platform.OS === "ios") {
             // iOS mở Apple Maps
             url = `http://maps.apple.com/?ll=${lat},${lng}&q=${label}`;
@@ -79,7 +78,6 @@ const PlaceDetail = ({ route, navigation }) => {
             // Android mở Google Maps
             url = `geo:${lat},${lng}?q=${lat},${lng}(${label})`;
         }
-
             Linking.openURL(url).catch(() => {
                 Alert.alert("Lỗi", "Không thể mở bản đồ");
             });

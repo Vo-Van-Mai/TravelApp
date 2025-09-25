@@ -18,9 +18,16 @@ const ListBooking = () => {
     const loadBooking = async () => {
         try {
             setLoading(true);
-            let url = endpoints['booking']+"get-list-booking";
-            const res = await authAPI(await AsyncStorage.getItem("token")).get(url);
-            setBookings(res.data);
+            if(user?.role=="traveler"){
+                let url = endpoints['booking']+"get-list-booking";
+                const res = await authAPI(await AsyncStorage.getItem("token")).get(url);
+                setBookings(res.data);
+            }
+            else if (user?.role=="provider"){
+                let url = endpoints['booking']+"get-bookings-by-provider";
+                const res = await authAPI(await AsyncStorage.getItem("token")).get(url);
+                setBookings(res.data);
+            }
         } catch (error) {
             console.log("Error", error);
             
@@ -35,6 +42,7 @@ const ListBooking = () => {
 
     return(
         <View style={MyStyle.container}>
+            {user?.role=="traveler" && <>
             <Header title={"Danh sách tour đã đặt"} />
             <FlatList
                 data={bookings}
@@ -59,6 +67,34 @@ const ListBooking = () => {
                     <AlertItem title="Bạn chưa đặt tour nào!" />
                 }
             />
+            </>}
+
+            {user?.role=="provider" &&<>
+                <Header title={"Danh sách booking"} />
+                <FlatList
+                data={bookings}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({item}) => 
+                    <List.Item
+                        style={style.border}
+                        title={item.tour.name}
+                        description={`Người đặt: ${item.user.username}`}
+                        left={() => <TouchableOpacity onPress={()=> nav.navigate("main", {
+                                        screen: "tour", 
+                                        params: {
+                                            screen: "detailTour", 
+                                            params: { tourId: item.tour.id, bookingId: item.id }
+                                        }
+                                        })}>
+                            <Image source={{uri: item.tour.provider_avatar}} style={{width: 100, borderRadius: 20, height: 100}} />
+                        </TouchableOpacity>}
+                    />
+                }       
+                ListEmptyComponent={
+                    <AlertItem title="Bạn chưa đặt tour nào!" />
+                }
+            />
+            </>}
         </View>
     );
 }

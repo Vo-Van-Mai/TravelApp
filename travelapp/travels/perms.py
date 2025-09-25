@@ -77,5 +77,3 @@ class IsOwnerBooking(permissions.IsAuthenticated):
             return False
         else:
             return True
-
-

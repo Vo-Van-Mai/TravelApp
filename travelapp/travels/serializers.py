@@ -337,7 +337,9 @@ class BookingDetailSerializer(BookingSerializer):
             "id": instance.user_id,
             'username': instance.user.username,
             "email": instance.user.email,
-            "phone": instance.user.phone
+            "phone": instance.user.phone,
+            "first_name": instance.user.first_name,
+            "last_name": instance.user.last_name
         }
         rep['tour'] = {
             "id": instance.tour_id,

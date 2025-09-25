@@ -32,6 +32,11 @@ const ManagementProvider = () => {
         'title': "Thống kê",
         'icon': "podium",
         'navigate': 'Stats'
+    }, {
+        "key": "5",
+        'title': "Danh sách booking",
+        'icon': "check",
+        'navigate': 'ListBooking'
     }]
 
     const nav = useNavigation();
